@@ -10,13 +10,17 @@ Outputs (in data/):
   selection_report.json    how many tasks survive each filter
   leak_examples.csv        every trace the leak check flagged, with a snippet (committed)
 
-Leak check: before pairing, every candidate trace is scanned and dropped if it
-  - names a test that the hidden human test patch adds (the agent must not have seen it), or
-  - shows a line of the golden fix in the output of a git history command
-    (git log/show/reflog/checkout/...), i.e. the agent peeked at the future fix.
-  A git leak drops the whole task (its environment likely exposes the fix); a hidden test
-  name drops only that trace. Every flagged trace is written to leak_examples.csv with a
-  snippet around the match, so the flags can be checked by hand.
+Leak check: before pairing, every candidate trace is scanned for signs the agent saw the
+future fix. The task images are built at the base commit without the hidden tests, so the
+fix can only leak through
+  - future_git_history: a git history command (git log/show/reflog/...) whose output has a
+    commit dated after the task was created, i.e. the image still carries the fix commits.
+    This drops the whole task, since the tester would see the same history.
+  - fetched_upstream: the agent downloaded from the task's own GitHub repo (curl, wget,
+    git clone, pip install git+...). This drops just that trace.
+Every flagged trace is written to leak_examples.csv with a snippet, for checking by hand.
+(An earlier version also flagged hidden test names and golden-patch lines anywhere in the
+trace; by hand those were almost all tests and code already in the repo, so they're gone.)
 
 Usage:
   python src/select_tasks.py
@@ -35,11 +39,10 @@ from join import TRACES_REPO
 
 MAX_PATCH_FILES = 3          # skip giant tasks at first (agent and golden patch)
 MAX_TRAJECTORY_CHARS = 400_000  # ~100k tokens, leaves room in a 131k context
-MIN_LEAK_LINE_CHARS = 25     # golden-patch lines shorter than this are too generic to count
-MIN_TEST_NAME_CHARS = 10     # skip generic names like "test_init"
+FUTURE_SLACK = pd.Timedelta(days=1)  # tolerance for time zones around created_at
 GIT_HISTORY_CMD = re.compile(r"git\s+(?:log|show|reflog|checkout|switch|cherry-pick|rev-list|blame|branch\s+-a|fetch|pull)\b")
-NEW_TEST_DEF = re.compile(r"^\+\s*(?:async\s+)?def\s+(test\w+)", re.M)
-OLD_TEST_DEF = re.compile(r"^-\s*(?:async\s+)?def\s+(test\w+)", re.M)
+GIT_DATE_LINE = re.compile(r"^\s*(?:Date|AuthorDate|CommitDate):\s+(.+?)\s*$", re.M)
+DOWNLOAD_CMD = re.compile(r"curl|wget|git\s+clone|pip\s+install\s+\S*git\+|urllib|requests\.get")
 
 CSV_COLUMNS = [
     "instance_id", "trajectory_id", "period", "resolved", "pilot", "in_filtered",
@@ -107,24 +110,6 @@ def paired_by_period(df: pd.DataFrame) -> dict:
     return {p: int((paired.period == p).sum()) for p in ["old", "new"]}
 
 
-def new_test_names(test_patch) -> list[str]:
-    """Test functions the hidden human test patch adds (not ones it only edits)."""
-    text = str(test_patch or "")
-    names = set(NEW_TEST_DEF.findall(text)) - set(OLD_TEST_DEF.findall(text))
-    return sorted(n for n in names if len(n) >= MIN_TEST_NAME_CHARS)
-
-
-def golden_lines(patch) -> list[str]:
-    """Distinctive lines the golden fix adds."""
-    out = set()
-    for line in str(patch or "").splitlines():
-        if line.startswith("+") and not line.startswith("+++"):
-            text = line[1:].strip()
-            if len(text) >= MIN_LEAK_LINE_CHARS:
-                out.add(text)
-    return sorted(out)
-
-
 def message_text(msg) -> str:
     if isinstance(msg, dict):
         parts = [msg.get("content"), msg.get("tool_calls"), msg.get("function_call")]
@@ -149,30 +134,34 @@ def snippet(text: str, start: int, end: int, width: int = 150) -> str:
     return text[max(0, start - width):end + width].replace("\n", " ")
 
 
-def leak_reasons(trajectory, test_names: list[str], fix_lines: list[str]) -> list[tuple[str, str]]:
+def fetch_commands(trajectory) -> str:
+    """Text of assistant steps that download something."""
+    steps = [message_text(m) for m in trajectory if isinstance(m, dict) and m.get("role") == "assistant"] \
+        if isinstance(trajectory, (list, tuple)) else []
+    return "\n".join(t for t in steps if DOWNLOAD_CMD.search(t))
+
+
+def leak_reasons(trajectory, created_at: pd.Timestamp, repo: str) -> list[tuple[str, str]]:
     """(reason, snippet of the trace around the match) for each kind of leak found."""
     found = []
-    full = str(trajectory)
-    for n in test_names:
-        m = re.search(rf"\b{re.escape(n)}\b", full)
-        if m:
-            found.append(("hidden_test_name", snippet(full, m.start(), m.end())))
-            break
     git_out = git_history_outputs(trajectory)
-    for line in fix_lines if git_out else []:
-        i = git_out.find(line)
-        if i >= 0:
-            found.append(("golden_fix_in_git_output", snippet(git_out, i, i + len(line))))
+    for m in GIT_DATE_LINE.finditer(git_out):
+        when = pd.to_datetime(m.group(1), utc=True, errors="coerce")
+        if pd.notna(when) and pd.notna(created_at) and when > created_at + FUTURE_SLACK:
+            found.append(("future_git_history", snippet(git_out, m.start(), m.end())))
             break
+    fetched = fetch_commands(trajectory)
+    m = re.search(rf"github\.com[/:]{re.escape(repo)}\b", fetched, re.I) if repo else None
+    if m:
+        found.append(("fetched_upstream", snippet(fetched, m.start(), m.end())))
     return found
 
 
 def scan_for_leaks(traces, df: pd.DataFrame) -> pd.DataFrame:
     """Scan the candidate traces batch by batch. Returns trajectory_id, leak_reasons, leak_snippet."""
-    keys = {
-        r.trajectory_id: (new_test_names(r.test_patch), golden_lines(r.patch))
-        for r in df[["trajectory_id", "test_patch", "patch"]].itertuples(index=False)
-    }
+    repo_col = "repo_task" if "repo_task" in df else "repo"
+    created = pd.to_datetime(df["created_at"], utc=True, errors="coerce")
+    keys = dict(zip(df["trajectory_id"], zip(created, df[repo_col].astype(str))))
     subset = traces.filter(lambda b: [t in keys for t in b], input_columns="trajectory_id", batched=True)
 
     def scan(batch):
@@ -215,7 +204,7 @@ def main() -> None:
     eligible = eligible_traces(df, counts)
     traces = None if args.no_leak_scan and args.skip_trajectories else load_dataset(TRACES_REPO, split="train")
 
-    leaks = {"hidden_test_name": 0, "golden_fix_in_git_output": 0}
+    leaks = {"future_git_history": 0, "fetched_upstream": 0}
     if not args.no_leak_scan:
         # Only tasks that still have a resolved and an unresolved trace can be picked.
         has_both = eligible.groupby("instance_id")["resolved"].transform("nunique") == 2
@@ -226,13 +215,12 @@ def main() -> None:
         leaky = eligible[eligible.leak_reasons != ""]
         leaky[["instance_id", "trajectory_id", "resolved", "period", "leak_reasons", "leak_snippet"]].to_csv(
             data / "leak_examples.csv", index=False)
-        # The fix in git output means the task's environment exposes the answer (future commits
-        # in the image), which the tester could find too, so drop the whole task. A hidden test
-        # name can also be the agent picking the same name, so drop just that trace.
-        env_leak_tasks = set(leaky.loc[leaky.leak_reasons.str.contains("golden_fix_in_git_output"), "instance_id"])
-        leaks["tasks_dropped_for_git_leak"] = len(env_leak_tasks)
+        # Future commits mean the task's image exposes the fix, which the tester could find too,
+        # so drop the whole task. A download is this one run's doing, so drop just that trace.
+        env_leak_tasks = set(leaky.loc[leaky.leak_reasons.str.contains("future_git_history"), "instance_id"])
+        leaks["tasks_dropped_for_future_git_history"] = len(env_leak_tasks)
         eligible = eligible[(eligible.leak_reasons == "") & ~eligible.instance_id.isin(env_leak_tasks)]
-        counts["no leak found (trace dropped on hidden test name, task dropped on git leak)"] = {
+        counts["no leak found (task dropped on future git history, trace dropped on upstream fetch)"] = {
             "traces": int(len(eligible)), "paired_tasks_by_period": paired_by_period(eligible)}
     pairs = pick_pairs(eligible, args.seed)
 
@@ -258,6 +246,8 @@ def main() -> None:
 
     report = {
         "filters": counts,
+        "exit_status_values": df["exit_status"].astype(str).str[:40].value_counts().head(10).to_dict()
+        if "exit_status" in df else None,
         "leaky_candidate_traces_dropped": leaks if not args.no_leak_scan else "leak scan skipped",
         "selected_tasks": {"new": int(len(new)), "old": int(len(old))},
         "selected_traces": int(len(chosen)),
