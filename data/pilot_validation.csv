@@ -1,0 +1,81 @@
+instance_id,run,period,error,f2p_passed,p2p_passed,tests_not_found,passes,head_date,commits_newer_than_head,newest_commit,unreachable_from_head,trajectory_id,exit_status,dataset_resolved,label_agrees
+borgbackup__borgstore-88,base,new,,0/1,12/12,0,False,2024-12-03T00:22:36+01:00,16,2025-04-06T20:07:21+02:00,17,,,,
+borgbackup__borgstore-88,golden,new,,1/1,12/12,0,True,2024-12-03T00:22:36+01:00,16,2025-04-06T20:07:21+02:00,17,,,,
+borgbackup__borgstore-88,agent_0,new,,0/1,12/12,0,False,2024-12-03T00:22:36+01:00,16,2025-04-06T20:07:21+02:00,17,chatcmpl-675b0888d492a911ba2c86c581ba9f63,submit,0.0,True
+borgbackup__borgstore-88,agent_1,new,,1/1,12/12,0,True,2024-12-03T00:22:36+01:00,16,2025-04-06T20:07:21+02:00,17,chatcmpl-b8c77bf48519dc5d9006696c0ad3e50a,submit,1.0,True
+canonical__charmcraft-2042,base,new,,0/1,84/84,0,False,2024-12-17T16:04:26-05:00,172,2025-04-15T16:27:30+00:00,214,,,,
+canonical__charmcraft-2042,golden,new,,1/1,84/84,0,True,2024-12-17T16:04:26-05:00,172,2025-04-15T16:27:30+00:00,214,,,,
+canonical__charmcraft-2042,agent_0,new,,0/1,84/84,0,False,2024-12-17T16:04:26-05:00,172,2025-04-15T16:27:30+00:00,214,chatcmpl-21a567d3947cb30f7e4808485d624e50,submit,0.0,True
+canonical__charmcraft-2042,agent_1,new,,1/1,84/84,0,True,2024-12-17T16:04:26-05:00,172,2025-04-15T16:27:30+00:00,214,chatcmpl-a7ff1de2646436557439345431ab54d5,submit,1.0,True
+canonical__charmcraft-2060,base,new,,0/1,17/17,0,False,2024-12-20T10:48:20-05:00,159,2025-04-15T16:27:30+00:00,202,,,,
+canonical__charmcraft-2060,golden,new,,1/1,17/17,0,True,2024-12-20T10:48:20-05:00,159,2025-04-15T16:27:30+00:00,202,,,,
+canonical__charmcraft-2060,agent_0,new,,0/1,17/17,0,False,2024-12-20T10:48:20-05:00,159,2025-04-15T16:27:30+00:00,202,chatcmpl-c64d40bd5795fcd1ff05b11f3ba826b4,submit,0.0,True
+canonical__charmcraft-2060,agent_1,new,,1/1,17/17,0,True,2024-12-20T10:48:20-05:00,159,2025-04-15T16:27:30+00:00,202,chatcmpl-c4232e8a763a0f4faed3de2b733f9fef,submit,1.0,True
+dalito__ucumvert-25,base,new,,0/1,2323/2323,0,False,2024-09-02T21:45:44+02:00,17,2025-04-01T17:41:32+02:00,18,,,,
+dalito__ucumvert-25,golden,new,,1/1,2323/2323,0,True,2024-09-02T21:45:44+02:00,17,2025-04-01T17:41:32+02:00,18,,,,
+dalito__ucumvert-25,agent_0,new,,0/1,2322/2323,0,False,2024-09-02T21:45:44+02:00,17,2025-04-01T17:41:32+02:00,18,chatcmpl-5b1f586a2bc22fff6d1d7b8f3890e170,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",0.0,True
+dalito__ucumvert-25,agent_1,new,,1/1,2323/2323,0,True,2024-09-02T21:45:44+02:00,17,2025-04-01T17:41:32+02:00,18,chatcmpl-8db48695b24233c633e7fa3a1c5c51c1,submit,1.0,True
+lzakharov__csv2md-22,base,new,,0/3,6/6,0,False,2024-03-18T11:58:04+03:00,2,2024-11-05T21:11:38+03:00,2,,,,
+lzakharov__csv2md-22,golden,new,,3/3,6/6,0,True,2024-03-18T11:58:04+03:00,2,2024-11-05T21:11:38+03:00,2,,,,
+lzakharov__csv2md-22,agent_0,new,,0/3,6/6,0,False,2024-03-18T11:58:04+03:00,2,2024-11-05T21:11:38+03:00,2,chatcmpl-21ccb40ccaf0053c7ea7058cbcfea557,submit,0.0,True
+lzakharov__csv2md-22,agent_1,new,,3/3,6/6,0,True,2024-03-18T11:58:04+03:00,2,2024-11-05T21:11:38+03:00,2,chatcmpl-7e41c0738d3f14cc9c0f8352ad744384,submit,1.0,True
+probabl-ai__skore-914,base,new,,0/1,17/17,0,False,2024-12-11T12:09:00+01:00,412,2025-04-15T18:31:45+02:00,878,,,,
+probabl-ai__skore-914,golden,new,,1/1,17/17,0,True,2024-12-11T12:09:00+01:00,412,2025-04-15T18:31:45+02:00,878,,,,
+probabl-ai__skore-914,agent_0,new,,0/1,17/17,0,False,2024-12-11T12:09:00+01:00,412,2025-04-15T18:31:45+02:00,878,chatcmpl-dafbf62868afa3a16fb65c72ef00070b,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",0.0,True
+probabl-ai__skore-914,agent_1,new,,1/1,17/17,0,True,2024-12-11T12:09:00+01:00,412,2025-04-15T18:31:45+02:00,878,chatcmpl-bfa4598e0ea25ad45444d020bc6a9ed3,submit,1.0,True
+radiocosmology__alpenhorn-226,base,new,,0/3,34/34,0,False,2024-11-13T13:47:29-08:00,78,2025-04-20T22:42:53-07:00,78,,,,
+radiocosmology__alpenhorn-226,golden,new,,3/3,34/34,0,True,2024-11-13T13:47:29-08:00,78,2025-04-20T22:42:53-07:00,78,,,,
+radiocosmology__alpenhorn-226,agent_0,new,,2/3,12/34,0,False,2024-11-13T13:47:29-08:00,78,2025-04-20T22:42:53-07:00,78,chatcmpl-ff96d0be9c97da35e573a587dd50c855,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",0.0,True
+radiocosmology__alpenhorn-226,agent_1,new,,3/3,34/34,0,True,2024-11-13T13:47:29-08:00,78,2025-04-20T22:42:53-07:00,78,chatcmpl-9120d5c4028870bdd5140b2a5e3c8a89,submit,1.0,True
+reagento__dishka-299,base,new,,0/2,8/8,0,False,2024-11-05T22:52:20+01:00,337,2025-04-13T23:29:56+02:00,392,,,,
+reagento__dishka-299,golden,new,,2/2,8/8,0,True,2024-11-05T22:52:20+01:00,337,2025-04-13T23:29:56+02:00,392,,,,
+reagento__dishka-299,agent_0,new,,0/2,8/8,0,False,2024-11-05T22:52:20+01:00,337,2025-04-13T23:29:56+02:00,392,chatcmpl-0c6ddeb1c53506a97d2dfda55d919606,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",0.0,True
+reagento__dishka-299,agent_1,new,,2/2,8/8,0,True,2024-11-05T22:52:20+01:00,337,2025-04-13T23:29:56+02:00,392,chatcmpl-249c14bc203d1756c33c71cf5eeda8b6,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",1.0,True
+roboflow__supervision-1739,base,new,,0/8,130/130,0,False,2024-12-13T18:37:00+03:00,188,2025-04-15T09:10:21+00:00,798,,,,
+roboflow__supervision-1739,golden,new,,8/8,130/130,0,True,2024-12-13T18:37:00+03:00,188,2025-04-15T09:10:21+00:00,798,,,,
+roboflow__supervision-1739,agent_0,new,,5/8,130/130,0,False,2024-12-13T18:37:00+03:00,188,2025-04-15T09:10:21+00:00,798,chatcmpl-2cb4f679a201b9e8f1159c1585d852fb,submit,0.0,True
+roboflow__supervision-1739,agent_1,new,,8/8,130/130,0,True,2024-12-13T18:37:00+03:00,188,2025-04-15T09:10:21+00:00,798,chatcmpl-fe1b7694fbbe1a0b30d4d90987fc59a1,submit,1.0,True
+scrapy__parsel-308,base,new,,0/1,176/176,0,False,2024-10-16T14:20:54+05:00,20,2025-03-31T17:53:32+05:00,48,,,,
+scrapy__parsel-308,golden,new,,1/1,176/176,0,True,2024-10-16T14:20:54+05:00,20,2025-03-31T17:53:32+05:00,48,,,,
+scrapy__parsel-308,agent_0,new,,0/1,176/176,0,False,2024-10-16T14:20:54+05:00,20,2025-03-31T17:53:32+05:00,48,chatcmpl-4ac294232b5726b8a997cefd5b3b8450,submit,0.0,True
+scrapy__parsel-308,agent_1,new,,1/1,176/176,0,True,2024-10-16T14:20:54+05:00,20,2025-03-31T17:53:32+05:00,48,chatcmpl-21494d764129030d4a33084d4f940eac,submit,1.0,True
+Textualize__textual-3896,base,old,,0/4,14/14,0,False,2023-12-17T20:17:20+00:00,4288,2025-04-22T15:27:50+01:00,4772,,,,
+Textualize__textual-3896,golden,old,,4/4,14/14,0,True,2023-12-17T20:17:20+00:00,4288,2025-04-22T15:27:50+01:00,4772,,,,
+Textualize__textual-3896,agent_0,old,,0/4,14/14,0,False,2023-12-17T20:17:20+00:00,4288,2025-04-22T15:27:50+01:00,4772,chatcmpl-b4c5fa93fae9d9750d9084cf337964f0,submit,0.0,True
+Textualize__textual-3896,agent_1,old,,4/4,14/14,0,True,2023-12-17T20:17:20+00:00,4288,2025-04-22T15:27:50+01:00,4772,chatcmpl-27720345812c5dd206bf4700e3ad6d61,submit,1.0,True
+asottile__add-trailing-comma-20,base,old,,0/2,48/48,0,False,2017-07-15T16:36:20-07:00,471,2024-08-05T20:56:13-04:00,471,,,,
+asottile__add-trailing-comma-20,golden,old,,2/2,48/48,0,True,2017-07-15T16:36:20-07:00,471,2024-08-05T20:56:13-04:00,471,,,,
+asottile__add-trailing-comma-20,agent_0,old,,1/2,48/48,0,False,2017-07-15T16:36:20-07:00,471,2024-08-05T20:56:13-04:00,471,chatcmpl-2c0001df45f049ea1364216f36b38aba,submit,0.0,True
+asottile__add-trailing-comma-20,agent_1,old,,2/2,48/48,0,True,2017-07-15T16:36:20-07:00,471,2024-08-05T20:56:13-04:00,471,chatcmpl-44d15baabe4d4df78137726d69fb80f9,submit,1.0,True
+bridgecrewio__checkov-289,base,old,,0/1,0/0,0,False,2020-05-23T04:30:15+00:00,17763,2025-04-24T15:15:52+03:00,17765,,,,
+bridgecrewio__checkov-289,golden,old,,1/1,0/0,0,True,2020-05-23T04:30:15+00:00,17763,2025-04-24T15:15:52+03:00,17765,,,,
+bridgecrewio__checkov-289,agent_0,old,,0/1,0/0,0,False,2020-05-23T04:30:15+00:00,17763,2025-04-24T15:15:52+03:00,17765,chatcmpl-99a18a3d44684e42f5bfbc77a6f68bef,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",0.0,True
+bridgecrewio__checkov-289,agent_1,old,,1/1,0/0,0,True,2020-05-23T04:30:15+00:00,17763,2025-04-24T15:15:52+03:00,17765,chatcmpl-1669ec7749747b50643d3151d98a3d78,submit,1.0,True
+burnash__gspread-1229,base,old,,0/1,57/57,0,False,2023-06-18T11:15:58+02:00,644,2025-04-02T20:17:10+02:00,646,,,,
+burnash__gspread-1229,golden,old,,1/1,57/57,0,True,2023-06-18T11:15:58+02:00,644,2025-04-02T20:17:10+02:00,646,,,,
+burnash__gspread-1229,agent_0,old,,0/1,57/57,0,False,2023-06-18T11:15:58+02:00,644,2025-04-02T20:17:10+02:00,646,chatcmpl-2a4ccb873ffdce6679f37db307b73d4b,submit,0.0,True
+burnash__gspread-1229,agent_1,old,,1/1,57/57,0,True,2023-06-18T11:15:58+02:00,644,2025-04-02T20:17:10+02:00,646,chatcmpl-12e16f32485fbdfda6b19d8d19243974,"RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100",1.0,True
+cunla__fakeredis-py-303,base,old,,0/1,25/25,0,False,2024-03-11T14:48:10+01:00,119,2024-08-14T15:00:37-04:00,121,,,,
+cunla__fakeredis-py-303,golden,old,,1/1,25/25,0,True,2024-03-11T14:48:10+01:00,119,2024-08-14T15:00:37-04:00,121,,,,
+cunla__fakeredis-py-303,agent_0,old,,0/1,25/25,0,False,2024-03-11T14:48:10+01:00,119,2024-08-14T15:00:37-04:00,121,chatcmpl-2614e80bad19d66d3d55a6f0c756f9f3,submit,0.0,True
+cunla__fakeredis-py-303,agent_1,old,,1/1,25/25,0,True,2024-03-11T14:48:10+01:00,119,2024-08-14T15:00:37-04:00,121,chatcmpl-9e10494748329e66b23a2617c91699f3,submit,1.0,True
+encode__starlette-1240,base,old,,0/4,17/17,0,False,2022-02-15T09:29:27+00:00,577,2025-04-16T07:57:27-05:00,589,,,,
+encode__starlette-1240,golden,old,,4/4,17/17,0,True,2022-02-15T09:29:27+00:00,577,2025-04-16T07:57:27-05:00,589,,,,
+encode__starlette-1240,agent_0,old,,4/4,16/17,0,False,2022-02-15T09:29:27+00:00,577,2025-04-16T07:57:27-05:00,589,chatcmpl-9d4dd7b6778ef0974301981f8e16a046,submit,0.0,True
+encode__starlette-1240,agent_1,old,,4/4,17/17,0,True,2022-02-15T09:29:27+00:00,577,2025-04-16T07:57:27-05:00,589,chatcmpl-8d85586443b75e97054bc07d452fe29a,submit,1.0,True
+jpadilla__pyjwt-670,base,old,,0/2,45/45,0,False,2021-06-15T10:40:18+06:00,227,2025-04-23T11:07:46+00:00,264,,,,
+jpadilla__pyjwt-670,golden,old,,2/2,45/45,0,True,2021-06-15T10:40:18+06:00,227,2025-04-23T11:07:46+00:00,264,,,,
+jpadilla__pyjwt-670,agent_0,old,,1/2,45/45,0,False,2021-06-15T10:40:18+06:00,227,2025-04-23T11:07:46+00:00,264,chatcmpl-66777616360f553bb4e714eb6ad9e257,submit,0.0,True
+jpadilla__pyjwt-670,agent_1,old,,2/2,45/45,0,True,2021-06-15T10:40:18+06:00,227,2025-04-23T11:07:46+00:00,264,chatcmpl-326b28adebc2a261143e665d62fb0195,submit,1.0,True
+nltk__nltk-3042,base,old,,0/1,15/15,0,False,2022-09-01T10:27:39+02:00,401,2025-03-15T10:30:12+09:30,491,,,,
+nltk__nltk-3042,golden,old,,1/1,15/15,0,True,2022-09-01T10:27:39+02:00,401,2025-03-15T10:30:12+09:30,491,,,,
+nltk__nltk-3042,agent_0,old,,0/1,15/15,0,False,2022-09-01T10:27:39+02:00,401,2025-03-15T10:30:12+09:30,491,chatcmpl-fcff0c19a21a38303b9ec722d9e38b20,submit,0.0,True
+nltk__nltk-3042,agent_1,old,,1/1,15/15,0,True,2022-09-01T10:27:39+02:00,401,2025-03-15T10:30:12+09:30,491,chatcmpl-955f736840f6ea5de4c2e85285be2c99,submit,1.0,True
+pypa__setuptools_scm-803,base,old,,0/1,40/40,0,False,2023-02-24T16:44:57+01:00,335,2024-08-12T19:57:05+00:00,357,,,,
+pypa__setuptools_scm-803,golden,old,,1/1,40/40,0,True,2023-02-24T16:44:57+01:00,335,2024-08-12T19:57:05+00:00,357,,,,
+pypa__setuptools_scm-803,agent_0,old,,0/1,40/40,0,False,2023-02-24T16:44:57+01:00,335,2024-08-12T19:57:05+00:00,357,chatcmpl-f95f63c8a73a8c9e437ce2cd9147d919,submit,0.0,True
+pypa__setuptools_scm-803,agent_1,old,,1/1,40/40,0,True,2023-02-24T16:44:57+01:00,335,2024-08-12T19:57:05+00:00,357,chatcmpl-0092b9de527149eb6d379b22fedaa12a,submit,1.0,True
+streamlink__streamlink-2765,base,old,,0/1,4/4,0,False,2019-12-28T14:36:21-08:00,1941,2024-08-12T20:09:56+02:00,1953,,,,
+streamlink__streamlink-2765,golden,old,,1/1,4/4,0,True,2019-12-28T14:36:21-08:00,1941,2024-08-12T20:09:56+02:00,1953,,,,
+streamlink__streamlink-2765,agent_0,old,,0/1,4/4,0,False,2019-12-28T14:36:21-08:00,1941,2024-08-12T20:09:56+02:00,1953,chatcmpl-f66a5a5d0f196e1b3c7bab6e018b8a20,submit,0.0,True
+streamlink__streamlink-2765,agent_1,old,,1/1,4/4,0,True,2019-12-28T14:36:21-08:00,1941,2024-08-12T20:09:56+02:00,1953,chatcmpl-b92aecd99242aab26cac723697f64c52,submit,1.0,True

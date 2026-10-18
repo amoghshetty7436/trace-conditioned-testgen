@@ -26,5 +26,7 @@ One resolved and one unresolved trace per task, after a leak check that drops an
 python src/pilot.py export     # where selected_traces.parquet lives -> data/pilot_tasks.jsonl
 python src/pilot.py validate   # on an x86 Linux machine with Docker -> data/pilot_validation.csv/.json
 ```
-For each pilot task this runs the hidden human tests with no change (FAIL_TO_PASS should fail), with the golden patch (all should pass), and with each chosen agent patch (compared with the dataset's `resolved`). It also counts commits newer than HEAD in the image. Task images are ~30 GB each and are deleted after each task.
+For each pilot task this runs the hidden human tests with no change (FAIL_TO_PASS should fail), with the golden patch (all should pass), and with each chosen agent patch (compared with the dataset's `resolved`). It also counts commits newer than HEAD in the image. Task images are usually 1 to 3 GB compressed (a few are ~30 GB) and are deleted after each task.
+
+The harness works around a few image quirks: some images installed the repo in editable mode from another path (such as `/borgstore`), so that path is linked to `/testbed`; some carry an installed copy of the package that shadows `/testbed`, so the repo goes first on `PYTHONPATH`; stored agent patches can lack trailing context, so patches apply with `--recount`; the agent's copy of `issue.md` is removed before a patch re-creates it; and pytest runs only the test files the FAIL_TO_PASS and PASS_TO_PASS ids name, since test patches can also add data files. If Docker Hub rate-limits pulls (429), add `{"registry-mirrors": ["https://mirror.gcr.io"]}` to `/etc/docker/daemon.json`.
 

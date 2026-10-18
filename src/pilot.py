@@ -1,7 +1,7 @@
 """Pilot check: do the chosen tasks run, and do the dataset's labels hold up?
 
 Two steps, because the full traces live on the machine that ran select_tasks.py and the
-Docker runs need an x86 Linux machine with plenty of disk (one task image is ~30 GB).
+Docker runs need an x86 Linux machine with plenty of disk (task images are 1 to 30 GB).
 
   python src/pilot.py export      # on the machine with data/selected_traces.parquet
       -> data/pilot_tasks.jsonl (pilot rows, patches and tests only, no trace text)
@@ -22,6 +22,7 @@ import json
 import re
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -40,7 +41,34 @@ RUN_SH = r"""
 source /opt/conda/bin/activate testbed 2>/dev/null || true
 cd /testbed
 git config --global --add safe.directory /testbed
-apply() { git apply --whitespace=nowarn "$1" 2>/dev/null || patch -p1 --forward --fuzz=3 -i "$1" >/dev/null; }
+# Some images were built with the repo at another path (e.g. /borgstore) and installed in
+# editable mode from there; point that missing path at /testbed so the package imports.
+site="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])' 2>/dev/null)"
+for p in $( (cat "$site"/*.pth "$site"/*.egg-link 2>/dev/null | grep '^/'; \
+             grep -l '"editable": true' "$site"/*.dist-info/direct_url.json 2>/dev/null \
+               | xargs -r grep -ho '"file://[^"]*' | cut -c9-) | sort -u); do
+  top="/$(echo "$p" | cut -d/ -f2)"; [ -e "$p" ] || [ -e "$top" ] || ln -s /testbed "$top"
+done
+# Others carry a plain installed copy of the package that shadows /testbed; put the repo first.
+shadowed=$(cd / && python - <<'PY'
+import importlib.util, os
+for root in ("/testbed/src", "/testbed"):
+    pkgs = [n for n in os.listdir(root) if os.path.isfile(os.path.join(root, n, "__init__.py"))] if os.path.isdir(root) else []
+    for n in pkgs:
+        try:
+            spec = importlib.util.find_spec(n)
+        except Exception:
+            continue
+        if spec and spec.origin and not os.path.realpath(spec.origin).startswith("/testbed/"):
+            print(root)
+            raise SystemExit
+PY
+)
+[ -n "$shadowed" ] && export PYTHONPATH="$shadowed${PYTHONPATH:+:$PYTHONPATH}"
+# --recount: some stored patches lost their trailing context lines, leaving hunk counts off.
+apply() { git apply --recount --whitespace=nowarn "$1" 2>/dev/null || patch -p1 --forward --fuzz=3 -i "$1" >/dev/null; }
+# Drop untracked files the patch re-creates (the agent's copy of /testbed/issue.md, say).
+while read -r f; do [ -n "$f" ] && ! git ls-files --error-unmatch "$f" >/dev/null 2>&1 && rm -f "$f"; done < /work/code_new_files
 if [ -s /work/code.diff ]; then apply /work/code.diff || { echo "CODE_PATCH_FAILED"; exit 0; }; fi
 # Reset the test files to the base commit so an agent's own test edits can't clash.
 while read -r f; do [ -n "$f" ] && { git checkout HEAD -- "$f" 2>/dev/null || rm -f "$f"; }; done < /work/test_patch_files
@@ -81,6 +109,15 @@ def patch_files(patch: str) -> list[str]:
     return sorted(set(re.findall(r"^\+\+\+ b/(\S+)", patch or "", re.M)))
 
 
+def new_files(patch: str) -> list[str]:
+    return re.findall(r"^diff --git a/\S+ b/(\S+)\nnew file mode", patch or "", re.M)
+
+
+def with_newline(patch) -> str:
+    """Stored patches are sometimes stripped; git and patch need the final newline."""
+    return patch if not patch or patch.endswith("\n") else patch + "\n"
+
+
 def test_command(install_config) -> str:
     cmd = as_dict(install_config).get("test_cmd") or DEFAULT_TEST_CMD
     cmd = " && ".join(cmd) if isinstance(cmd, list) else str(cmd)
@@ -99,10 +136,13 @@ def run_tests(image: str, code_patch: str, test_patch: str, test_cmd: str, test_
     """Apply a code patch plus the hidden tests in a fresh container; return {test_id: status}."""
     with tempfile.TemporaryDirectory() as work:
         w = Path(work)
-        (w / "code.diff").write_text(code_patch or "")
-        (w / "tests.diff").write_text(test_patch or "")
+        (w / "code.diff").write_text(with_newline(code_patch))
+        (w / "tests.diff").write_text(with_newline(test_patch))
+        (w / "code_new_files").write_text("\n".join(new_files(code_patch)) + "\n")
         (w / "test_patch_files").write_text("\n".join(patch_files(test_patch)) + "\n")
-        files = sorted(set(patch_files(test_patch)) | {t.split("::")[0] for t in test_ids if "::" in t})
+        # Run the files the test ids name; the test patch can also touch data files (cassettes).
+        files = sorted({t.split("::")[0] for t in test_ids if "::" in t}
+                       or {f for f in patch_files(test_patch) if f.endswith(".py")})
         (w / "test_files").write_text("\n".join(files) + "\n")
         (w / "test_cmd").write_text(test_cmd)
         script = RUN_SH.replace("{timeout}", str(RUN_TIMEOUT))
@@ -162,7 +202,11 @@ def validate(args) -> None:
         f2p, p2p = as_list(t.FAIL_TO_PASS), as_list(t.PASS_TO_PASS)
         cmd = test_command(t.get("install_config"))
         print(f"[{instance_id}] pulling {image}", flush=True)
-        pull = docker("pull", image, timeout=3600)
+        for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
+            pull = docker("pull", image, timeout=3600)
+            if pull.returncode == 0 or "429" not in pull.stderr:
+                break
+            time.sleep(300 * (attempt + 1))
         if pull.returncode != 0:
             records.append({"instance_id": instance_id, "run": "pull", "error": pull.stderr.strip()[-300:]})
             continue

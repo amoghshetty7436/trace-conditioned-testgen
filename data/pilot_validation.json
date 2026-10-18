@@ -1,0 +1,12 @@
+{
+  "tasks": 20,
+  "pull_failures": 0,
+  "base_f2p_all_fail": 20,
+  "golden_passes": 20,
+  "golden_runs": 20,
+  "agent_runs": 40,
+  "agent_label_agrees": 40,
+  "agent_label_disagrees": 0,
+  "agent_errors": {},
+  "tasks_with_future_history": 20
+}
