@@ -56,34 +56,43 @@
         "new": 98
       }
     },
-    "agent finished normally (exit_status submit)": {
-      "traces": 42839,
+    "agent submitted or hit its step limit (no crash)": {
+      "traces": 45844,
       "paired_tasks_by_period": {
-        "old": 960,
-        "new": 79
+        "old": 1098,
+        "new": 94
       }
     },
-    "no leak found (trace dropped on hidden test name, task dropped on git leak)": {
-      "traces": 6908,
+    "no leak found (task dropped on future git history, trace dropped on upstream fetch)": {
+      "traces": 11861,
       "paired_tasks_by_period": {
-        "old": 638,
-        "new": 57
+        "old": 1024,
+        "new": 91
       }
     }
   },
+  "exit_status_values": {
+    "submit": 60739,
+    "RuntimeError: Agent reached maximum iter": 6003,
+    "AgentStuckInLoopError: Agent got stuck i": 252,
+    "Timeout: litellm.Timeout: APITimeoutErro": 36,
+    "RuntimeError: There was an unexpected er": 29,
+    "unknown": 10,
+    "AttributeError: 'str' object has no attr": 5
+  },
   "leaky_candidate_traces_dropped": {
-    "hidden_test_name": 2379,
-    "golden_fix_in_git_output": 399,
-    "tasks_dropped_for_git_leak": 157
+    "future_git_history": 110,
+    "fetched_upstream": 11,
+    "tasks_dropped_for_future_git_history": 76
   },
   "selected_tasks": {
-    "new": 57,
+    "new": 91,
     "old": 75
   },
-  "selected_traces": 264,
+  "selected_traces": 332,
   "pilot_tasks": 20,
-  "selected_in_filtered_split": 132,
-  "selected_with_git_history_trace": 30,
+  "selected_in_filtered_split": 166,
+  "selected_with_git_history_trace": 38,
   "settings": {
     "n_old": 75,
     "n_new": null,
