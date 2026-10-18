@@ -52,8 +52,11 @@ def load_tasks() -> pd.DataFrame:
 
 
 def load_traces(limit: int | None) -> pd.DataFrame:
-    split = f"train[:{limit}]" if limit else "train"
-    return load_dataset(TRACES_REPO, split=split).to_pandas()
+    if limit:
+        # Stream so a smoke test reads only the first rows instead of the whole 2 GB file.
+        rows = load_dataset(TRACES_REPO, split="train", streaming=True).take(limit)
+        return pd.DataFrame(list(rows))
+    return load_dataset(TRACES_REPO, split="train").to_pandas()
 
 
 def period(created_at: pd.Series) -> pd.Series:
