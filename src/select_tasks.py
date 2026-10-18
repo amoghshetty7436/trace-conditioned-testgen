@@ -13,11 +13,14 @@ Outputs (in data/):
 Leak check: before pairing, every candidate trace is scanned for signs the agent saw the
 future fix. The task images are built at the base commit without the hidden tests, so the
 fix can only leak through
-  - future_git_history: a git history command (git log/show/reflog/...) whose output has a
-    commit dated after the task was created, i.e. the image still carries the fix commits.
-    This drops the whole task, since the tester would see the same history.
+  - future_git_history: a git command that looks beyond HEAD (--all, reflog, origin/...,
+    fetch) and shows a commit dated after the task was created. The images do carry later
+    commits (checked by hand: the fmralign image's `git log --all` runs months past the
+    base commit), so such an agent may have copied the fix.
   - fetched_upstream: the agent downloaded from the task's own GitHub repo (curl, wget,
-    git clone, pip install git+...). This drops just that trace.
+    git clone, pip install git+...).
+Both drop just that trace. The task itself stays usable because the tester's sandbox strips
+the git history down to the base commit.
 Every flagged trace is written to leak_examples.csv with a snippet, for checking by hand.
 (An earlier version also flagged hidden test names and golden-patch lines anywhere in the
 trace; by hand those were almost all tests and code already in the repo, so they're gone.)
@@ -40,7 +43,12 @@ from join import TRACES_REPO
 MAX_PATCH_FILES = 3          # skip giant tasks at first (agent and golden patch)
 MAX_TRAJECTORY_CHARS = 400_000  # ~100k tokens, leaves room in a 131k context
 FUTURE_SLACK = pd.Timedelta(days=1)  # tolerance for time zones around created_at
-GIT_HISTORY_CMD = re.compile(r"git\s+(?:log|show|reflog|checkout|switch|cherry-pick|rev-list|blame|branch\s+-a|fetch|pull)\b")
+# Plain `git log` only walks back from HEAD (the base commit), which can itself be dated a few
+# days after created_at. Future commits are only reachable through other refs, so only commands
+# that look beyond HEAD count.
+GIT_HISTORY_CMD = re.compile(
+    r"git\s+(?:(?:log|show|rev-list|shortlog|branch|tag)\b[^\n]*?(?:--all|--branches|--remotes|--tags|-a\b|"
+    r"origin/|upstream/|FETCH_HEAD)|reflog\b|fetch\b|pull\b|(?:checkout|switch)\s+(?:origin/|upstream/|-b\s+\S+\s+origin/))")
 GIT_DATE_LINE = re.compile(r"^\s*(?:Date|AuthorDate|CommitDate):\s+(.+?)\s*$", re.M)
 DOWNLOAD_CMD = re.compile(r"curl|wget|git\s+clone|pip\s+install\s+\S*git\+|urllib|requests\.get")
 
@@ -223,12 +231,9 @@ def main() -> None:
         leaky = eligible[eligible.leak_reasons != ""]
         leaky[["instance_id", "trajectory_id", "resolved", "period", "leak_reasons", "leak_snippet"]].to_csv(
             data / "leak_examples.csv", index=False)
-        # Future commits mean the task's image exposes the fix, which the tester could find too,
-        # so drop the whole task. A download is this one run's doing, so drop just that trace.
-        env_leak_tasks = set(leaky.loc[leaky.leak_reasons.str.contains("future_git_history"), "instance_id"])
-        leaks["tasks_dropped_for_future_git_history"] = len(env_leak_tasks)
-        eligible = eligible[(eligible.leak_reasons == "") & ~eligible.instance_id.isin(env_leak_tasks)]
-        counts["no leak found (task dropped on future git history, trace dropped on upstream fetch)"] = {
+        # The tester's sandbox gets its git history stripped, so a leak only spoils this one run.
+        eligible = eligible[eligible.leak_reasons == ""]
+        counts["no leak found in the trace"] = {
             "traces": int(len(eligible)), "paired_tasks_by_period": paired_by_period(eligible)}
     pairs = pick_pairs(eligible, args.seed)
 

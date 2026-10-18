@@ -20,3 +20,11 @@ python src/join.py                # full join -> data/combined_light.parquet, da
 python src/select_tasks.py        # -> data/selected_traces.csv, selected_traces.parquet, selection_report.json
 ```
 One resolved and one unresolved trace per task, after a leak check that drops any task whose git history shows commits from after the task was created, and any trace that downloads from the upstream repo: every eligible new-set task (Sep 2024 to Apr 2025) plus 75 sampled old-set tasks (before Jun 2024). 20 tasks are marked `pilot`. `selection_report.json` shows how many tasks survive each filter.
+
+## Pilot: do the tasks run?
+```bash
+python src/pilot.py export     # where selected_traces.parquet lives -> data/pilot_tasks.jsonl
+python src/pilot.py validate   # on an x86 Linux machine with Docker -> data/pilot_validation.csv/.json
+```
+For each pilot task this runs the hidden human tests with no change (FAIL_TO_PASS should fail), with the golden patch (all should pass), and with each chosen agent patch (compared with the dataset's `resolved`). It also counts commits newer than HEAD in the image. Task images are ~30 GB each and are deleted after each task.
+
