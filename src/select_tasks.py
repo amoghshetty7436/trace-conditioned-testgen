@@ -8,12 +8,15 @@ Outputs (in data/):
   selected_traces.csv      one row per chosen trace (small, committed to git)
   selected_traces.parquet  same rows plus the full trajectory text (git-ignored)
   selection_report.json    how many tasks survive each filter
+  leak_examples.csv        every trace the leak check flagged, with a snippet (committed)
 
 Leak check: before pairing, every candidate trace is scanned and dropped if it
   - names a test that the hidden human test patch adds (the agent must not have seen it), or
   - shows a line of the golden fix in the output of a git history command
     (git log/show/reflog/checkout/...), i.e. the agent peeked at the future fix.
-  A task with any leaky trace is dropped entirely, since its environment likely leaks.
+  A git leak drops the whole task (its environment likely exposes the fix); a hidden test
+  name drops only that trace. Every flagged trace is written to leak_examples.csv with a
+  snippet around the match, so the flags can be checked by hand.
 
 Usage:
   python src/select_tasks.py
@@ -41,12 +44,19 @@ OLD_TEST_DEF = re.compile(r"^-\s*(?:async\s+)?def\s+(test\w+)", re.M)
 CSV_COLUMNS = [
     "instance_id", "trajectory_id", "period", "resolved", "pilot", "in_filtered",
     "repo", "repo_task", "created_at", "docker_image", "trajectory_chars", "uses_git_history",
-    "agent_patch_files", "golden_patch_files", "n_fail_to_pass",
+    "agent_patch_files", "agent_edited_files", "golden_patch_files", "n_fail_to_pass",
 ]
 
 
 def files_in_patch(patch) -> int:
     return str(patch or "").count("diff --git ")
+
+
+def edited_files_in_patch(patch) -> int:
+    """Existing files the patch changes. New files (often the agent's reproduce scripts)
+    don't make a task bigger, so they aren't counted."""
+    blocks = str(patch or "").split("diff --git ")[1:]
+    return sum("new file mode" not in b.split("@@", 1)[0] for b in blocks)
 
 
 def list_len(value) -> int:
@@ -64,6 +74,7 @@ def list_len(value) -> int:
 def eligible_traces(df: pd.DataFrame, counts: dict) -> pd.DataFrame:
     df = df.copy()
     df["agent_patch_files"] = df["model_patch"].map(files_in_patch)
+    df["agent_edited_files"] = df["model_patch"].map(edited_files_in_patch)
     df["golden_patch_files"] = df["patch"].map(files_in_patch)
     df["n_fail_to_pass"] = df["FAIL_TO_PASS"].map(list_len)
 
@@ -73,7 +84,7 @@ def eligible_traces(df: pd.DataFrame, counts: dict) -> pd.DataFrame:
         ("task has FAIL_TO_PASS tests", df.n_fail_to_pass > 0),
         (f"golden patch touches <= {MAX_PATCH_FILES} files", df.golden_patch_files.between(1, MAX_PATCH_FILES)),
         ("agent patch is non-empty", df.agent_patch_files > 0),
-        (f"agent patch touches <= {MAX_PATCH_FILES} files", df.agent_patch_files <= MAX_PATCH_FILES),
+        (f"agent patch edits <= {MAX_PATCH_FILES} existing files", df.agent_edited_files <= MAX_PATCH_FILES),
         (f"trace <= {MAX_TRAJECTORY_CHARS:,} chars", df.trajectory_chars <= MAX_TRAJECTORY_CHARS),
     ]
     if "exit_status" in df:
@@ -134,19 +145,30 @@ def git_history_outputs(trajectory) -> str:
     return "\n".join(out)
 
 
-def leak_reasons(trajectory, test_names: list[str], fix_lines: list[str]) -> list[str]:
-    reasons = []
+def snippet(text: str, start: int, end: int, width: int = 150) -> str:
+    return text[max(0, start - width):end + width].replace("\n", " ")
+
+
+def leak_reasons(trajectory, test_names: list[str], fix_lines: list[str]) -> list[tuple[str, str]]:
+    """(reason, snippet of the trace around the match) for each kind of leak found."""
+    found = []
     full = str(trajectory)
-    if any(re.search(rf"\b{re.escape(n)}\b", full) for n in test_names):
-        reasons.append("hidden_test_name")
+    for n in test_names:
+        m = re.search(rf"\b{re.escape(n)}\b", full)
+        if m:
+            found.append(("hidden_test_name", snippet(full, m.start(), m.end())))
+            break
     git_out = git_history_outputs(trajectory)
-    if git_out and any(line in git_out for line in fix_lines):
-        reasons.append("golden_fix_in_git_output")
-    return reasons
+    for line in fix_lines if git_out else []:
+        i = git_out.find(line)
+        if i >= 0:
+            found.append(("golden_fix_in_git_output", snippet(git_out, i, i + len(line))))
+            break
+    return found
 
 
 def scan_for_leaks(traces, df: pd.DataFrame) -> pd.DataFrame:
-    """Scan the candidate traces batch by batch. Returns trajectory_id, leak_reasons."""
+    """Scan the candidate traces batch by batch. Returns trajectory_id, leak_reasons, leak_snippet."""
     keys = {
         r.trajectory_id: (new_test_names(r.test_patch), golden_lines(r.patch))
         for r in df[["trajectory_id", "test_patch", "patch"]].itertuples(index=False)
@@ -154,9 +176,11 @@ def scan_for_leaks(traces, df: pd.DataFrame) -> pd.DataFrame:
     subset = traces.filter(lambda b: [t in keys for t in b], input_columns="trajectory_id", batched=True)
 
     def scan(batch):
-        return {"leak_reasons": [
-            ",".join(leak_reasons(traj, *keys[tid])) for tid, traj in zip(batch["trajectory_id"], batch["trajectory"])
-        ]}
+        found = [leak_reasons(traj, *keys[tid]) for tid, traj in zip(batch["trajectory_id"], batch["trajectory"])]
+        return {
+            "leak_reasons": [",".join(r for r, _ in f) for f in found],
+            "leak_snippet": [" | ".join(s for _, s in f) for f in found],
+        }
 
     scanned = subset.map(scan, batched=True, batch_size=64, remove_columns=[
         c for c in subset.column_names if c != "trajectory_id"])
@@ -199,12 +223,16 @@ def main() -> None:
         eligible["leak_reasons"] = eligible["leak_reasons"].fillna("")
         for reason in leaks:
             leaks[reason] = int(eligible.leak_reasons.str.contains(reason).sum())
-        # A leak usually means the task's environment exposes the answer (e.g. future commits
-        # in the image), which the tester could find too, so drop the whole task.
-        leaky_tasks = set(eligible.loc[eligible.leak_reasons != "", "instance_id"])
-        leaks["tasks_dropped"] = len(leaky_tasks)
-        eligible = eligible[~eligible.instance_id.isin(leaky_tasks)]
-        counts["no leak found in any trace of the task"] = {
+        leaky = eligible[eligible.leak_reasons != ""]
+        leaky[["instance_id", "trajectory_id", "resolved", "period", "leak_reasons", "leak_snippet"]].to_csv(
+            data / "leak_examples.csv", index=False)
+        # The fix in git output means the task's environment exposes the answer (future commits
+        # in the image), which the tester could find too, so drop the whole task. A hidden test
+        # name can also be the agent picking the same name, so drop just that trace.
+        env_leak_tasks = set(leaky.loc[leaky.leak_reasons.str.contains("golden_fix_in_git_output"), "instance_id"])
+        leaks["tasks_dropped_for_git_leak"] = len(env_leak_tasks)
+        eligible = eligible[(eligible.leak_reasons == "") & ~eligible.instance_id.isin(env_leak_tasks)]
+        counts["no leak found (trace dropped on hidden test name, task dropped on git leak)"] = {
             "traces": int(len(eligible)), "paired_tasks_by_period": paired_by_period(eligible)}
     pairs = pick_pairs(eligible, args.seed)
 
