@@ -45,7 +45,7 @@ GIT_DATE_LINE = re.compile(r"^\s*(?:Date|AuthorDate|CommitDate):\s+(.+?)\s*$", r
 DOWNLOAD_CMD = re.compile(r"curl|wget|git\s+clone|pip\s+install\s+\S*git\+|urllib|requests\.get")
 
 CSV_COLUMNS = [
-    "instance_id", "trajectory_id", "period", "resolved", "pilot", "in_filtered",
+    "instance_id", "trajectory_id", "period", "resolved", "exit_status", "pilot", "in_filtered",
     "repo", "repo_task", "created_at", "docker_image", "trajectory_chars", "uses_git_history",
     "agent_patch_files", "agent_edited_files", "golden_patch_files", "n_fail_to_pass",
 ]
@@ -74,7 +74,7 @@ def list_len(value) -> int:
         return 0
 
 
-def eligible_traces(df: pd.DataFrame, counts: dict) -> pd.DataFrame:
+def eligible_traces(df: pd.DataFrame, counts: dict, keep_max_iterations: bool = True) -> pd.DataFrame:
     df = df.copy()
     df["agent_patch_files"] = df["model_patch"].map(files_in_patch)
     df["agent_edited_files"] = df["model_patch"].map(edited_files_in_patch)
@@ -91,7 +91,13 @@ def eligible_traces(df: pd.DataFrame, counts: dict) -> pd.DataFrame:
         (f"trace <= {MAX_TRAJECTORY_CHARS:,} chars", df.trajectory_chars <= MAX_TRAJECTORY_CHARS),
     ]
     if "exit_status" in df:
-        steps.append(("agent finished normally (exit_status submit)", df.exit_status.astype(str).str.startswith("submit")))
+        status = df.exit_status.astype(str)
+        if keep_max_iterations:
+            # Running out of steps still leaves a (usually wrong) patch; only crashes are dropped.
+            ok = status.str.startswith("submit") | status.str.contains("maximum iteration")
+            steps.append(("agent submitted or hit its step limit (no crash)", ok))
+        else:
+            steps.append(("agent finished normally (exit_status submit)", status.str.startswith("submit")))
 
     keep = pd.Series(True, index=df.index)
     for name, mask in steps:
@@ -194,6 +200,8 @@ def main() -> None:
     ap.add_argument("--n-pilot", type=int, default=20, help="pilot tasks, split evenly new/old")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--skip-trajectories", action="store_true", help="don't write selected_traces.parquet")
+    ap.add_argument("--exclude-max-iterations", action="store_true",
+                    help="also drop runs where the agent hit its step limit")
     ap.add_argument("--no-leak-scan", action="store_true", help="skip the leak check (not for the real study)")
     args = ap.parse_args()
     data = Path(args.data)
@@ -201,7 +209,7 @@ def main() -> None:
     df = pd.read_parquet(data / "combined_light.parquet")
     df["resolved"] = df["resolved"].astype(int)
     counts = {"all traces": {"traces": int(len(df)), "paired_tasks_by_period": paired_by_period(df)}}
-    eligible = eligible_traces(df, counts)
+    eligible = eligible_traces(df, counts, keep_max_iterations=not args.exclude_max_iterations)
     traces = None if args.no_leak_scan and args.skip_trajectories else load_dataset(TRACES_REPO, split="train")
 
     leaks = {"future_git_history": 0, "fetched_upstream": 0}
