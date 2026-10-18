@@ -63,11 +63,11 @@
         "new": 94
       }
     },
-    "no leak found (task dropped on future git history, trace dropped on upstream fetch)": {
-      "traces": 11861,
+    "no leak found in the trace": {
+      "traces": 12718,
       "paired_tasks_by_period": {
-        "old": 1024,
-        "new": 91
+        "old": 1096,
+        "new": 94
       }
     }
   },
@@ -81,18 +81,17 @@
     "AttributeError: 'str' object has no attr": 5
   },
   "leaky_candidate_traces_dropped": {
-    "future_git_history": 110,
-    "fetched_upstream": 11,
-    "tasks_dropped_for_future_git_history": 76
+    "future_git_history": 7,
+    "fetched_upstream": 11
   },
   "selected_tasks": {
-    "new": 91,
+    "new": 94,
     "old": 75
   },
-  "selected_traces": 332,
+  "selected_traces": 338,
   "pilot_tasks": 20,
-  "selected_in_filtered_split": 166,
-  "selected_with_git_history_trace": 38,
+  "selected_in_filtered_split": 169,
+  "selected_with_git_history_trace": 35,
   "settings": {
     "n_old": 75,
     "n_new": null,
