@@ -1,0 +1,95 @@
+{
+  "filters": {
+    "all traces": {
+      "traces": 67074,
+      "paired_tasks_by_period": {
+        "old": 1519,
+        "new": 126
+      }
+    },
+    "task is old or new (not in the gap)": {
+      "traces": 63410,
+      "paired_tasks_by_period": {
+        "old": 1519,
+        "new": 126
+      }
+    },
+    "task has a Docker image": {
+      "traces": 57651,
+      "paired_tasks_by_period": {
+        "old": 1371,
+        "new": 118
+      }
+    },
+    "task has FAIL_TO_PASS tests": {
+      "traces": 57651,
+      "paired_tasks_by_period": {
+        "old": 1371,
+        "new": 118
+      }
+    },
+    "golden patch touches <= 3 files": {
+      "traces": 48412,
+      "paired_tasks_by_period": {
+        "old": 1191,
+        "new": 103
+      }
+    },
+    "agent patch is non-empty": {
+      "traces": 48377,
+      "paired_tasks_by_period": {
+        "old": 1189,
+        "new": 102
+      }
+    },
+    "agent patch edits <= 3 existing files": {
+      "traces": 47770,
+      "paired_tasks_by_period": {
+        "old": 1175,
+        "new": 101
+      }
+    },
+    "trace <= 400,000 chars": {
+      "traces": 46079,
+      "paired_tasks_by_period": {
+        "old": 1132,
+        "new": 98
+      }
+    },
+    "agent finished normally (exit_status submit)": {
+      "traces": 42839,
+      "paired_tasks_by_period": {
+        "old": 960,
+        "new": 79
+      }
+    },
+    "no leak found (trace dropped on hidden test name, task dropped on git leak)": {
+      "traces": 6908,
+      "paired_tasks_by_period": {
+        "old": 638,
+        "new": 57
+      }
+    }
+  },
+  "leaky_candidate_traces_dropped": {
+    "hidden_test_name": 2379,
+    "golden_fix_in_git_output": 399,
+    "tasks_dropped_for_git_leak": 157
+  },
+  "selected_tasks": {
+    "new": 57,
+    "old": 75
+  },
+  "selected_traces": 264,
+  "pilot_tasks": 20,
+  "selected_in_filtered_split": 132,
+  "selected_with_git_history_trace": 30,
+  "settings": {
+    "n_old": 75,
+    "n_new": null,
+    "n_pilot": 20,
+    "seed": 0,
+    "max_patch_files": 3,
+    "max_trajectory_chars": 400000
+  }
+}
