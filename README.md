@@ -11,6 +11,12 @@ We join two public Hugging Face datasets on `instance_id`:
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python src/join.py --limit 2000   # quick smoke test
-python src/join.py                # full join -> data/combined.parquet, data/join_report.json
+python src/join.py                # full join -> data/combined_light.parquet, data/join_report.json
 ```
 `data/*.parquet` is git-ignored (too large for GitHub). `data/join_report.json` holds the sanity counts.
+
+## Step A: pick the tasks
+```bash
+python src/select_tasks.py        # -> data/selected_traces.csv, selected_traces.parquet, selection_report.json
+```
+One resolved and one unresolved trace per task: every eligible new-set task (Sep 2024 to Apr 2025) plus 75 sampled old-set tasks (before Jun 2024). 20 tasks are marked `pilot`. `selection_report.json` shows how many tasks survive each filter.
