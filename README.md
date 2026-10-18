@@ -19,4 +19,4 @@ python src/join.py                # full join -> data/combined_light.parquet, da
 ```bash
 python src/select_tasks.py        # -> data/selected_traces.csv, selected_traces.parquet, selection_report.json
 ```
-One resolved and one unresolved trace per task, after a leak check that drops any task whose traces name a hidden test or show the golden fix in git history output: every eligible new-set task (Sep 2024 to Apr 2025) plus 75 sampled old-set tasks (before Jun 2024). 20 tasks are marked `pilot`. `selection_report.json` shows how many tasks survive each filter.
+One resolved and one unresolved trace per task, after a leak check that drops any task whose git history shows commits from after the task was created, and any trace that downloads from the upstream repo: every eligible new-set task (Sep 2024 to Apr 2025) plus 75 sampled old-set tasks (before Jun 2024). 20 tasks are marked `pilot`. `selection_report.json` shows how many tasks survive each filter.
