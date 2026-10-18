@@ -1,0 +1,51 @@
+{
+  "traces_rows": 67074,
+  "tasks_rows_deduplicated": 21336,
+  "joined_rows": 67074,
+  "traces_without_task": 0,
+  "distinct_tasks_with_trace": 6306,
+  "resolved_share_of_traces": 0.4795,
+  "tasks_by_period": {
+    "old": 5356,
+    "between": 388,
+    "new": 562
+  },
+  "tasks_with_resolved_and_unresolved_trace_by_period": {
+    "old": 1519,
+    "between": 96,
+    "new": 126
+  },
+  "tasks_with_only_unresolved_traces_by_period": {
+    "old": 2020,
+    "between": 198,
+    "new": 296
+  },
+  "tasks_in_filtered_split": 5731,
+  "traces_mentioning_git_history_cmds": 16626,
+  "trajectory_chars_quantiles": {
+    "0.1": 171911,
+    "0.5": 249823,
+    "0.9": 355352,
+    "0.99": 461762
+  },
+  "gen_tests_correct_values": {
+    "count": 31453.0,
+    "mean": 0.3005,
+    "std": 0.4585,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 1.0,
+    "max": 1.0
+  },
+  "pred_passes_gen_tests_values": {
+    "count": 31389.0,
+    "mean": 0.7213,
+    "std": 0.4484,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 1.0,
+    "75%": 1.0,
+    "max": 1.0
+  }
+}
