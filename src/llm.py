@@ -4,10 +4,12 @@ Settings come from environment variables, so switching models needs no code chan
   TESTER_BASE_URL  default: Gemini's OpenAI-compatible endpoint
   TESTER_API_KEY   default: $GEMINI_API_KEY
   TESTER_MODEL     default: gemini-3.5-flash (free tier of the Gemini API)
+  TESTER_TPM       optional input-token budget per minute; calls wait to stay under it
 
   python src/llm.py models     # list the models the endpoint offers
 """
 
+import http.client
 import json
 import os
 import re
@@ -53,6 +55,24 @@ def stream(body: dict, timeout: int = 900) -> dict:
     return {"text": "".join(text), "usage": usage}
 
 
+_sent: list[tuple[float, int]] = []  # (time, estimated input tokens) of recent calls
+
+
+def pace(messages: list[dict]) -> None:
+    """Wait until this call fits in TESTER_TPM input tokens per rolling minute (rough estimate)."""
+    tpm = int(os.environ.get("TESTER_TPM") or 0)
+    if not tpm:
+        return
+    est = sum(len(str(m.get("content", ""))) for m in messages) // 3 + 50
+    while True:
+        now = time.time()
+        _sent[:] = [(t, n) for t, n in _sent if now - t < 62]
+        if sum(n for _, n in _sent) + est <= tpm or not _sent:
+            break
+        time.sleep(62 - (now - _sent[0][0]) + 0.5)
+    _sent.append((time.time(), est))
+
+
 def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192, seed: int | None = None,
          retries: int = 8) -> dict:
     """Returns {"text", "prompt_tokens", "completion_tokens"}. Waits out rate limits (429) and 5xx."""
@@ -63,6 +83,7 @@ def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192,
     body["stream_options"] = {"include_usage": True}
     for attempt in range(retries + 1):
         try:
+            pace(messages)
             out = stream(body)
             usage = out["usage"] or {}
             text = out["text"]
@@ -77,12 +98,13 @@ def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192,
                     del body[k]
                 continue
             if (e.code == 429 or e.code >= 500) and attempt < retries:
-                wait = float(e.headers.get("Retry-After") or min(30 * 2 ** attempt, 900))
+                hint = re.search(r"retry in ([\d.]+)s", detail)
+                wait = float(e.headers.get("Retry-After") or (float(hint.group(1)) + 2 if hint else min(30 * 2 ** attempt, 900)))
                 print(f"  llm: HTTP {e.code}, waiting {wait:.0f}s: {' '.join(detail.split())[:200]}", flush=True)
                 time.sleep(wait)
                 continue
             raise RuntimeError(f"LLM request failed: HTTP {e.code}: {detail}") from e
-        except (urllib.error.URLError, TimeoutError) as e:
+        except (OSError, http.client.HTTPException) as e:  # dropped connections, timeouts
             if attempt < retries:
                 time.sleep(min(30 * 2 ** attempt, 900))
                 continue
