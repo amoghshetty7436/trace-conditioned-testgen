@@ -50,3 +50,5 @@ The model is any OpenAI-compatible endpoint, set with `TESTER_BASE_URL`, `TESTER
 TESTER_MODEL=gemma-4-26b-a4b-it TESTER_TPM=15000 python src/tester.py run --prompt-size small
 ```
 `--prompt-size small` cuts each prompt section to a fixed budget (the trace to 14k characters, about 4k tokens) and in revision rounds resends the issue, patch, changed files (plus related tests for C2 and up), current test file and failures, without the trace; `TESTER_TPM` paces calls to the per-minute limit. To use a local vLLM server instead: `TESTER_BASE_URL=http://localhost:8000/v1 TESTER_MODEL=openai/gpt-oss-20b`.
+
+Pilot results on the free model, by condition: [docs/pilot_flash_lite.md](docs/pilot_flash_lite.md).
