@@ -318,6 +318,8 @@ def run(args) -> None:
         if out_path.exists() else set()
 
     task_ids = list(dict.fromkeys(rows.instance_id))[: args.limit or None]
+    shard, shards = map(int, args.shard.split("/"))
+    task_ids = task_ids[shard - 1::shards]
     for instance_id in task_ids:
         group = rows[rows.instance_id == instance_id]
         todo = [(tr, c, s) for tr in group.itertuples() for c in conditions for s in range(args.seeds)
@@ -439,6 +441,7 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("--prompt-size", choices=list(LIMITS), default="full",
                     help="small: keep each call under ~13k input tokens (for Gemma on the free Gemini API)")
+    ap.add_argument("--shard", default="1/1", help="i/n: run every n-th task starting at the i-th, to run n processes at once")
     ap.add_argument("--keep-images", action="store_true")
     ap.add_argument("--restart", action="store_true", help="delete earlier runs and start over")
     args = ap.parse_args()
