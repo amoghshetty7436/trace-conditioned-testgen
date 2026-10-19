@@ -3,3 +3,4 @@ __pycache__/
 data/*.parquet
 results/
 !data/join_report.json
+data/wheels/

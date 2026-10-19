@@ -4,7 +4,8 @@ Two steps, because the full traces live on the machine that ran select_tasks.py 
 Docker runs need an x86 Linux machine with plenty of disk (task images are 1 to 30 GB).
 
   python src/pilot.py export      # on the machine with data/selected_traces.parquet
-      -> data/pilot_tasks.jsonl (pilot rows, patches and tests only, no trace text)
+      -> data/pilot_tasks.jsonl (pilot rows: issue, patches, tests) and
+         data/pilot_traces.jsonl.gz (the full traces, for the tester's trace conditions)
 
   python src/pilot.py validate    # on a machine with Docker
       -> data/pilot_validation.csv, data/pilot_validation.json
@@ -18,6 +19,7 @@ the tester's sandbox must strip). Images are deleted after each task unless --ke
 """
 
 import argparse
+import gzip
 import json
 import re
 import subprocess
@@ -30,14 +32,14 @@ import pandas as pd
 EXPORT_COLUMNS = [
     "instance_id", "trajectory_id", "period", "resolved", "exit_status", "docker_image",
     "base_commit", "created_at", "model_patch", "patch", "test_patch", "FAIL_TO_PASS",
-    "PASS_TO_PASS", "install_config",
+    "PASS_TO_PASS", "install_config", "problem_statement",
 ]
 DEFAULT_TEST_CMD = "pytest --no-header -rA --tb=no -p no:cacheprovider"
 RESULT_LINE = re.compile(r"^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+(\S+)", re.M)
 RUN_TIMEOUT = 1800
 
-# Runs inside the container. /work holds code.diff, tests.diff, test_files, test_cmd.
-RUN_SH = r"""
+# Shared start of every in-container script: activate the env and work around image quirks.
+PRELUDE_SH = r"""
 source /opt/conda/bin/activate testbed 2>/dev/null || true
 cd /testbed
 git config --global --add safe.directory /testbed
@@ -67,6 +69,10 @@ PY
 [ -n "$shadowed" ] && export PYTHONPATH="$shadowed${PYTHONPATH:+:$PYTHONPATH}"
 # --recount: some stored patches lost their trailing context lines, leaving hunk counts off.
 apply() { git apply --recount --whitespace=nowarn "$1" 2>/dev/null || patch -p1 --forward --fuzz=3 -i "$1" >/dev/null; }
+"""
+
+# Runs inside the container. /work holds code.diff, tests.diff, test_files, test_cmd.
+RUN_SH = PRELUDE_SH + r"""
 # Drop untracked files the patch re-creates (the agent's copy of /testbed/issue.md, say).
 while read -r f; do [ -n "$f" ] && ! git ls-files --error-unmatch "$f" >/dev/null 2>&1 && rm -f "$f"; done < /work/code_new_files
 if [ -s /work/code.diff ]; then apply /work/code.diff || { echo "CODE_PATCH_FAILED"; exit 0; }; fi
@@ -132,6 +138,15 @@ def docker(*args, timeout=None, check=False) -> subprocess.CompletedProcess:
     return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout, check=check)
 
 
+def pull_image(image: str) -> subprocess.CompletedProcess:
+    for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
+        pull = docker("pull", image, timeout=3600)
+        if pull.returncode == 0 or "429" not in pull.stderr:
+            break
+        time.sleep(300 * (attempt + 1))
+    return pull
+
+
 def run_tests(image: str, code_patch: str, test_patch: str, test_cmd: str, test_ids: list[str]) -> dict:
     """Apply a code patch plus the hidden tests in a fresh container; return {test_id: status}."""
     with tempfile.TemporaryDirectory() as work:
@@ -183,6 +198,22 @@ def export(args) -> None:
     out = Path(args.data) / "pilot_tasks.jsonl"
     df[cols].to_json(out, orient="records", lines=True, default_handler=str)
     print(f"wrote {len(df)} traces from {df.instance_id.nunique()} tasks to {out}")
+    traces = Path(args.data) / "pilot_traces.jsonl.gz"
+    with gzip.open(traces, "wt") as f:
+        for tid, traj in zip(df.trajectory_id, df.trajectory):
+            f.write(json.dumps({"trajectory_id": tid, "trajectory": plain(traj)}, default=str) + "\n")
+    print(f"wrote the full traces to {traces}")
+
+
+def plain(value):
+    """numpy arrays and nested values from parquet -> plain lists and dicts for JSON."""
+    if hasattr(value, "tolist") and not isinstance(value, (str, bytes)):
+        value = value.tolist()
+    if isinstance(value, dict):
+        return {k: plain(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [plain(v) for v in value]
+    return value
 
 
 def validate(args) -> None:
@@ -202,11 +233,7 @@ def validate(args) -> None:
         f2p, p2p = as_list(t.FAIL_TO_PASS), as_list(t.PASS_TO_PASS)
         cmd = test_command(t.get("install_config"))
         print(f"[{instance_id}] pulling {image}", flush=True)
-        for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
-            pull = docker("pull", image, timeout=3600)
-            if pull.returncode == 0 or "429" not in pull.stderr:
-                break
-            time.sleep(300 * (attempt + 1))
+        pull = pull_image(image)
         if pull.returncode != 0:
             records.append({"instance_id": instance_id, "run": "pull", "error": pull.stderr.strip()[-300:]})
             continue
