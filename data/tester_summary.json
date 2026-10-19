@@ -1,0 +1,207 @@
+{
+  "model": [
+    "gpt-5.6-terra"
+  ],
+  "by_condition": {
+    "C1": {
+      "runs": 36,
+      "bug_caught_rate": 0.222,
+      "false_alarm_rate": 0.056,
+      "no_test_file": 0,
+      "mean_tests": 3.89,
+      "mean_broken": 0.5,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.371,
+      "mean_prompt_tokens": 18114
+    },
+    "C2": {
+      "runs": 36,
+      "bug_caught_rate": 0.278,
+      "false_alarm_rate": 0.056,
+      "no_test_file": 0,
+      "mean_tests": 3.81,
+      "mean_broken": 0.5,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.368,
+      "mean_prompt_tokens": 27784
+    },
+    "C3": {
+      "runs": 36,
+      "bug_caught_rate": 0.389,
+      "false_alarm_rate": 0.167,
+      "no_test_file": 0,
+      "mean_tests": 4.08,
+      "mean_broken": 0.5,
+      "differential_rate": 0.861,
+      "mean_coverage": 0.363,
+      "mean_prompt_tokens": 30037
+    },
+    "C4": {
+      "runs": 36,
+      "bug_caught_rate": 0.278,
+      "false_alarm_rate": 0.167,
+      "no_test_file": 0,
+      "mean_tests": 3.92,
+      "mean_broken": 0.39,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.364,
+      "mean_prompt_tokens": 35294
+    },
+    "C5": {
+      "runs": 36,
+      "bug_caught_rate": 0.278,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 3.69,
+      "mean_broken": 0.39,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.399,
+      "mean_prompt_tokens": 54280
+    },
+    "X": {
+      "runs": 36,
+      "bug_caught_rate": 0.222,
+      "false_alarm_rate": 0.056,
+      "no_test_file": 0,
+      "mean_tests": 3.53,
+      "mean_broken": 0.31,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.355,
+      "mean_prompt_tokens": 49612
+    }
+  },
+  "by_condition_and_period": {
+    "C1 new": {
+      "runs": 18,
+      "bug_caught_rate": 0.111,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 3.06,
+      "mean_broken": 0.89,
+      "differential_rate": 0.778,
+      "mean_coverage": 0.285,
+      "mean_prompt_tokens": 22111
+    },
+    "C1 old": {
+      "runs": 18,
+      "bug_caught_rate": 0.333,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 4.72,
+      "mean_broken": 0.11,
+      "differential_rate": 0.889,
+      "mean_coverage": 0.457,
+      "mean_prompt_tokens": 14118
+    },
+    "C2 new": {
+      "runs": 18,
+      "bug_caught_rate": 0.111,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 2.89,
+      "mean_broken": 0.72,
+      "differential_rate": 0.778,
+      "mean_coverage": 0.286,
+      "mean_prompt_tokens": 32388
+    },
+    "C2 old": {
+      "runs": 18,
+      "bug_caught_rate": 0.444,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 4.72,
+      "mean_broken": 0.28,
+      "differential_rate": 0.889,
+      "mean_coverage": 0.457,
+      "mean_prompt_tokens": 23179
+    },
+    "C3 new": {
+      "runs": 18,
+      "bug_caught_rate": 0.333,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 3.0,
+      "mean_broken": 0.89,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.281,
+      "mean_prompt_tokens": 34795
+    },
+    "C3 old": {
+      "runs": 18,
+      "bug_caught_rate": 0.444,
+      "false_alarm_rate": 0.222,
+      "no_test_file": 0,
+      "mean_tests": 5.17,
+      "mean_broken": 0.11,
+      "differential_rate": 0.889,
+      "mean_coverage": 0.444,
+      "mean_prompt_tokens": 25280
+    },
+    "C4 new": {
+      "runs": 18,
+      "bug_caught_rate": 0.111,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 2.72,
+      "mean_broken": 0.67,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.282,
+      "mean_prompt_tokens": 39029
+    },
+    "C4 old": {
+      "runs": 18,
+      "bug_caught_rate": 0.444,
+      "false_alarm_rate": 0.222,
+      "no_test_file": 0,
+      "mean_tests": 5.11,
+      "mean_broken": 0.11,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.445,
+      "mean_prompt_tokens": 31560
+    },
+    "C5 new": {
+      "runs": 18,
+      "bug_caught_rate": 0.222,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 2.94,
+      "mean_broken": 0.72,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.375,
+      "mean_prompt_tokens": 63995
+    },
+    "C5 old": {
+      "runs": 18,
+      "bug_caught_rate": 0.333,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 4.44,
+      "mean_broken": 0.06,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.426,
+      "mean_prompt_tokens": 44566
+    },
+    "X new": {
+      "runs": 18,
+      "bug_caught_rate": 0.222,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 2.44,
+      "mean_broken": 0.56,
+      "differential_rate": 0.778,
+      "mean_coverage": 0.263,
+      "mean_prompt_tokens": 58711
+    },
+    "X old": {
+      "runs": 18,
+      "bug_caught_rate": 0.222,
+      "false_alarm_rate": 0.111,
+      "no_test_file": 0,
+      "mean_tests": 4.61,
+      "mean_broken": 0.06,
+      "differential_rate": 0.889,
+      "mean_coverage": 0.447,
+      "mean_prompt_tokens": 40513
+    }
+  }
+}
