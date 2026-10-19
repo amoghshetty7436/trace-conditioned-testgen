@@ -42,9 +42,20 @@ from sandbox import clean, clean_tag
 
 CONDITIONS = ["C1", "C2", "C3", "C4", "C5", "X"]
 ROUNDS = 3
-FILE_KEEP = 25_000      # chars per changed file shown to the tester
-RELATED_KEEP = 15_000   # chars per related test file (C2)
-DIFF_KEEP = 30_000
+FILE_KEEP = 25_000      # chars read per changed file / related test file; the prompt limits below cut further
+RELATED_KEEP = 15_000
+# Character budgets per prompt section. "small" keeps every call under ~13k input tokens, for
+# endpoints with small per-minute token limits (Gemma on the free Gemini API allows 16k a minute).
+# In "small" mode a revision round resends the issue, the patch, the changed files (and for C2 and
+# up the related tests), the current test file and the failures, instead of the whole conversation;
+# the trace is left out of revisions.
+LIMITS = {
+    "full": {"issue": 10_000, "diff": 30_000, "files": 60_000, "related": 30_000, "readme": 4_000,
+             "trace": 60_000, "feedback": 6_000, "summary_input": 60_000},
+    "small": {"issue": 4_000, "diff": 8_000, "files": 12_000, "related": 6_000, "readme": 1_500,
+              "trace": 14_000, "feedback": 2_500, "summary_input": 36_000},
+}
+L = LIMITS["full"]
 TEST_NAME = "test_ttg_generated.py"
 RUN_TIMEOUT = 600
 
@@ -76,6 +87,24 @@ TRACE_HEADER = {
     "C5": "# The coding agent's work log (long parts cut)\n",
     "X": "# The coding agent's work log (long parts cut)\n",
 }
+
+REVISE = """# Issue
+{issue}
+
+# Agent patch (applied at /testbed)
+```diff
+{diff}
+```
+
+# Changed files after the patch
+{files}
+{related}
+# Your current test file `{test_path}`
+```python
+{code}
+```
+
+""" + "{feedback}"
 
 FEEDBACK = """Your test file was run on the patched code.
 
@@ -215,22 +244,23 @@ def extract_code(text: str) -> str | None:
     return max(blocks, key=len).strip() + "\n" if blocks else None
 
 
-def describe_files(files: dict[str, str | None]) -> str:
-    return "\n".join(f"## {p}\n```python\n{t}\n```\n" for p, t in files.items() if t is not None) or "(none)\n"
+def describe_files(files: dict[str, str | None], budget: int) -> str:
+    files = {p: t for p, t in files.items() if t is not None}
+    each = budget // max(len(files), 1)
+    return "\n".join(f"## {p}\n```python\n{traces.cut(t, each)}\n```\n" for p, t in files.items()) or "(none)\n"
 
 
 def build_prompt(task, trace, condition: str, ctx: dict, trace_text: str, test_path: str) -> str:
     extra = ""
     if condition != "C1":
-        related = describe_files(ctx["related"]) if ctx["related"] else "(none found)\n"
+        related = describe_files(ctx["related"], L["related"]) if ctx["related"] else "(none found)\n"
         extra += f"\n# Existing tests for these modules\n{related}"
         if ctx.get("readme"):
-            extra += f"\n# README (start)\n```\n{ctx['readme']}\n```\n"
+            extra += f"\n# README (start)\n```\n{ctx['readme'][:L['readme']]}\n```\n"
     if condition in TRACE_HEADER:
-        extra += f"\n{TRACE_HEADER[condition]}```\n{trace_text}\n```\n"
-    diff = trace.model_patch if len(trace.model_patch) <= DIFF_KEEP else trace.model_patch[:DIFF_KEEP] + "\n[... cut ...]"
-    return TASK.format(issue=task.problem_statement, diff=diff, files=describe_files(ctx["files"]),
-                       extra=extra, test_path=test_path)
+        extra += f"\n{TRACE_HEADER[condition]}```\n{traces.cut(trace_text, L['trace'])}\n```\n"
+    return TASK.format(issue=traces.cut(task.problem_statement, L["issue"]), diff=traces.cut(trace.model_patch, L["diff"]),
+                       files=describe_files(ctx["files"], L["files"]), extra=extra, test_path=test_path)
 
 
 def summary_for(trajectory_id: str, trajectory: list, cache_path: Path) -> str:
@@ -241,7 +271,7 @@ def summary_for(trajectory_id: str, trajectory: list, cache_path: Path) -> str:
             cache[(r["trajectory_id"], r["model"])] = r["summary"]
     model = llm.settings()["model"]
     if (trajectory_id, model) not in cache:
-        reply = llm.chat([{"role": "user", "content": traces.SUMMARY_PROMPT.format(trace=traces.render_raw(trajectory))}],
+        reply = llm.chat([{"role": "user", "content": traces.SUMMARY_PROMPT.format(trace=traces.render_raw(trajectory, L["summary_input"]))}],
                          temperature=0.0)
         with cache_path.open("a") as f:
             f.write(json.dumps({"trajectory_id": trajectory_id, "model": model, "summary": reply["text"]}) + "\n")
@@ -275,7 +305,9 @@ def run(args) -> None:
         raise SystemExit(f"{traces_path} is missing: run `python src/pilot.py export` where selected_traces.parquet is")
     with gzip.open(traces_path, "rt") as f:
         trajs = {r["trajectory_id"]: r["trajectory"] for r in map(json.loads, f)}
-    raw = {tid: traces.render_raw(t) for tid, t in trajs.items()}
+    global L
+    L = LIMITS[args.prompt_size]
+    raw = {tid: traces.render_raw(t, L["trace"]) for tid, t in trajs.items()}
     lengths = {tid: sum(len(traces.text_of(m.get("content"))) for m in t if isinstance(m, dict)) for tid, t in trajs.items()}
     instance_of = dict(zip(rows.trajectory_id, rows.instance_id))
     conditions = args.conditions.split(",")
@@ -320,7 +352,7 @@ def run(args) -> None:
             cover = {p: n for p, n in added_line_numbers(trace.model_patch).items() if p in ctx["files"]}
             rec = {"instance_id": instance_id, "trajectory_id": trace.trajectory_id, "condition": condition,
                    "seed": seed, "resolved": int(trace.resolved), "period": task.period,
-                   "model": llm.settings()["model"], "prompt_chars": len(prompt), "rounds": 0,
+                   "model": llm.settings()["model"], "prompt_size": args.prompt_size, "prompt_chars": len(prompt), "rounds": 0,
                    "prompt_tokens": 0, "completion_tokens": 0, "coverage": None, "feedback": []}
             code = None
             try:
@@ -338,13 +370,24 @@ def run(args) -> None:
                     if not NOT_CLEAN.search(fb["output"]) or rnd == ROUNDS - 1:
                         break
                     cov = f"\nCoverage of the patch's added lines: {fb['coverage']:.0%}\n" if fb["coverage"] is not None else ""
-                    messages += [{"role": "assistant", "content": reply["text"]},
-                                 {"role": "user", "content": FEEDBACK.format(output=fb["output"][-6000:], coverage=cov)}]
+                    feedback = FEEDBACK.format(output=fb["output"][-L["feedback"]:], coverage=cov)
+                    if args.prompt_size == "small":
+                        related = "" if condition == "C1" or not ctx["related"] else \
+                            f"\n# Existing tests for these modules\n{describe_files(ctx['related'], L['related'])}"
+                        messages = [messages[0], {"role": "user", "content": REVISE.format(
+                            issue=traces.cut(task.problem_statement, L["issue"]), test_path=test_path, code=code,
+                            diff=traces.cut(trace.model_patch, L["diff"]), feedback=feedback,
+                            files=describe_files(ctx["files"], L["files"]), related=related)}]
+                    else:
+                        messages += [{"role": "assistant", "content": reply["text"]}, {"role": "user", "content": feedback}]
             except RuntimeError as e:
-                rec["error"] = str(e)[:500]
-                print(f"{label}: {rec['error']}", flush=True)
-                if "HTTP 4" in rec["error"] and "429" not in rec["error"]:
+                # Nothing is saved for this run, so rerunning the same command picks it up again.
+                print(f"{label}: {str(e)[:500]}", flush=True)
+                if "HTTP 429" in str(e):
+                    raise SystemExit("still rate-limited after retries (daily quota?); rerun later to resume")
+                if "HTTP 4" in str(e):
                     raise SystemExit("the model endpoint refused the request; check the key and model name")
+                continue
             rec["test_path"], rec["test_code"] = test_path, code
             if code:
                 rec.update(grade(tag, task, trace, code, test_path, cmd))
@@ -394,6 +437,8 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="only the first N pilot tasks")
     ap.add_argument("--conditions", default=",".join(CONDITIONS))
     ap.add_argument("--seeds", type=int, default=1)
+    ap.add_argument("--prompt-size", choices=list(LIMITS), default="full",
+                    help="small: keep each call under ~13k input tokens (for Gemma on the free Gemini API)")
     ap.add_argument("--keep-images", action="store_true")
     ap.add_argument("--restart", action="store_true", help="delete earlier runs and start over")
     args = ap.parse_args()
