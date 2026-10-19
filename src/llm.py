@@ -5,6 +5,8 @@ Settings come from environment variables, so switching models needs no code chan
   TESTER_API_KEY   default: $GEMINI_API_KEY
   TESTER_MODEL     default: gemini-3.5-flash (free tier of the Gemini API)
   TESTER_TPM       optional input-token budget per minute; calls wait to stay under it
+  Azure OpenAI works too: point TESTER_BASE_URL at https://<resource>.../openai/v1 and the key goes in
+  an api-key header.
 
   python src/llm.py models     # list the models the endpoint offers
 """
@@ -27,11 +29,15 @@ def settings() -> dict:
             "model": os.environ.get("TESTER_MODEL", "gemini-3.5-flash")}
 
 
+def headers(s: dict) -> dict:
+    auth = {"api-key": s["api_key"]} if ".azure.com" in s["base_url"] else {"Authorization": f"Bearer {s['api_key']}"}
+    return {"Content-Type": "application/json", **auth}
+
+
 def request(path: str, body: dict | None = None, timeout: int = 600) -> dict:
     s = settings()
     req = urllib.request.Request(s["base_url"] + path, data=json.dumps(body).encode() if body else None,
-                                 headers={"Content-Type": "application/json",
-                                          "Authorization": f"Bearer {s['api_key']}"})
+                                 headers=headers(s))
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.load(resp)
 
@@ -40,8 +46,7 @@ def stream(body: dict, timeout: int = 900) -> dict:
     """Streamed chat call. Streaming keeps bytes flowing, so proxies don't cut long generations."""
     s = settings()
     req = urllib.request.Request(s["base_url"] + "/chat/completions",
-                                 data=json.dumps({**body, "stream": True}).encode(),
-                                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {s['api_key']}"})
+                                 data=json.dumps({**body, "stream": True}).encode(), headers=headers(s))
     text, usage = [], {}
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         for line in resp:
@@ -92,10 +97,13 @@ def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192,
                     "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")}
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")[:500]
-            unknown = [k for k in ("seed", "stream_options") if k in body and k in detail]
+            unknown = [k for k in ("seed", "stream_options", "temperature") if k in body and k in detail]
             if e.code == 400 and unknown:  # not every endpoint takes these
                 for k in unknown:
                     del body[k]
+                continue
+            if e.code == 400 and "max_tokens" in body and "max_completion_tokens" in detail:  # newer OpenAI models
+                body["max_completion_tokens"] = max(body.pop("max_tokens"), 32768)  # includes reasoning tokens
                 continue
             if (e.code == 429 or e.code >= 500) and attempt < retries:
                 hint = re.search(r"retry in ([\d.]+)s", detail)
