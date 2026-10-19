@@ -125,7 +125,7 @@ if [ -s /work/code.diff ]; then apply /work/code.diff || { echo "CODE_PATCH_FAIL
 python - <<'PY'
 import json, os, re, subprocess
 want = json.load(open("/work/request.json"))
-tracked = subprocess.run(["git", "ls-files"], capture_output=True, text=True).stdout.split()
+tracked = subprocess.run(["git", "ls-files"], stdout=subprocess.PIPE, universal_newlines=True).stdout.split()
 tests = [t for t in tracked if t.endswith(".py") and re.search(r"(^|/)(test_[^/]*|[^/]*_test)\.py$", t)]
 def read(p, keep):
     try:
