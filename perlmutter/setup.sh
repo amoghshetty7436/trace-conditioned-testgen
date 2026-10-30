@@ -20,8 +20,8 @@ fi
 
 # Model weights (about 65 GB). original/ and metal/ are other copies of the same weights.
 export HF_HOME="$ROOT/hf"
-"$ROOT/vllm-env/bin/hf" download openai/gpt-oss-120b --local-dir "$ROOT/models/gpt-oss-120b" \
-  --exclude "original/*" "metal/*"
+"$ROOT/vllm-env/bin/python" -c "from huggingface_hub import snapshot_download as d; d('openai/gpt-oss-120b', \
+  local_dir='$ROOT/models/gpt-oss-120b', ignore_patterns=['original/*', 'metal/*'])"
 
 # coverage.py wheels for the sandbox; compute nodes can download these too, this just saves time.
 "$ROOT/ttg-env/bin/python" -c "import sys; sys.path.insert(0, 'src'); import sandbox; print(sandbox.coverage_wheels())"
