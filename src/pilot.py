@@ -21,6 +21,7 @@ the tester's sandbox must strip). Images are deleted after each task unless --ke
 import argparse
 import gzip
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -134,8 +135,20 @@ def test_command(install_config) -> str:
     return cmd
 
 
+# The container command. Docker by default; on NERSC Perlmutter, CONTAINER_CLI=podman-hpc.
+CONTAINER_CLI = os.environ.get("CONTAINER_CLI", "docker")
+
+
 def docker(*args, timeout=None, check=False) -> subprocess.CompletedProcess:
-    return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout, check=check)
+    return subprocess.run([CONTAINER_CLI, *args], capture_output=True, text=True, timeout=timeout, check=check)
+
+
+def image_name(image: str) -> str:
+    """Podman won't guess a registry for short names like `swerebench/...`, so spell out docker.io."""
+    first = image.split("/")[0]
+    if CONTAINER_CLI == "docker" or ("/" in image and ("." in first or ":" in first or first == "localhost")):
+        return image
+    return "docker.io/" + image
 
 
 def pull_image(image: str) -> subprocess.CompletedProcess:
@@ -229,7 +242,7 @@ def validate(args) -> None:
         if instance_id in done:
             continue
         t = task.iloc[0]
-        image = t.docker_image
+        image = image_name(t.docker_image)
         f2p, p2p = as_list(t.FAIL_TO_PASS), as_list(t.PASS_TO_PASS)
         cmd = test_command(t.get("install_config"))
         print(f"[{instance_id}] pulling {image}", flush=True)

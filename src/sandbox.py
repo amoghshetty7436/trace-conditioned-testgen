@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pilot import as_list, docker, pull_image, run_tests, test_command, verdict
+from pilot import CONTAINER_CLI, as_list, docker, image_name, pull_image, run_tests, test_command, verdict
 
 MIN_NEEDLE = 30  # shorter added lines (`return x`, `)`) are too common to mean anything
 
@@ -141,8 +141,8 @@ def flatten(container_name: str, image: str, tag: str) -> subprocess.CompletedPr
     if cfg.get("Cmd"):
         changes.append(f"CMD {json.dumps(cfg['Cmd'])}")
     args = [a for c in changes for a in ("--change", c)]
-    export = subprocess.Popen(["docker", "export", container_name], stdout=subprocess.PIPE)
-    out = subprocess.run(["docker", "import", *args, "-", tag], stdin=export.stdout, capture_output=True, text=True)
+    export = subprocess.Popen([CONTAINER_CLI, "export", container_name], stdout=subprocess.PIPE)
+    out = subprocess.run([CONTAINER_CLI, "import", *args, "-", tag], stdin=export.stdout, capture_output=True, text=True)
     export.wait()
     return out
 
@@ -179,12 +179,13 @@ def prepare(args) -> None:
         tag = clean_tag(t.instance_id)
         rec = {"instance_id": t.instance_id, "period": t.period, "clean_image": tag}
         print(f"[{t.instance_id}] pulling", flush=True)
-        if pull_image(t.docker_image).returncode != 0:
+        image = image_name(t.docker_image)
+        if pull_image(image).returncode != 0:
             records.append({**rec, "error": "pull_failed"})
             continue
         print(f"[{t.instance_id}] cleaning", flush=True)
-        rec["error"] = clean(t.docker_image, tag)
-        docker("rmi", "-f", t.docker_image, timeout=600)  # the cleaned image keeps the layers it needs
+        rec["error"] = clean(image, tag)
+        docker("rmi", "-f", image, timeout=600)  # the cleaned image keeps the layers it needs
         if not rec["error"]:
             print(f"[{t.instance_id}] checking", flush=True)
             rec.update(check(tag, added_lines(t.patch) + added_lines(t.test_patch)))

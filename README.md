@@ -53,3 +53,6 @@ TESTER_MODEL=gemma-4-26b-a4b-it TESTER_TPM=15000 python src/tester.py run --prom
 
 Pilot results on the free model, by condition: [docs/pilot_flash_lite.md](docs/pilot_flash_lite.md).
 Pilot results on the stronger model: [docs/pilot_azure.md](docs/pilot_azure.md).
+
+## On NERSC Perlmutter
+To run the tester on an A100 node with a local open model (gpt-oss-120b on vLLM) and `podman-hpc` instead of Docker, see [perlmutter/README.md](perlmutter/README.md). The container command is set with `CONTAINER_CLI` (default `docker`), and `tester.py run --tasks a,b --out-tag name` runs chosen tasks into their own output files.

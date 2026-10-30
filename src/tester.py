@@ -37,7 +37,7 @@ import pandas as pd
 
 import llm
 import traces
-from pilot import PRELUDE_SH, RESULT_LINE, docker, new_files, pull_image, test_command, with_newline
+from pilot import PRELUDE_SH, RESULT_LINE, docker, image_name, new_files, pull_image, test_command, with_newline
 from sandbox import clean, clean_tag
 
 CONDITIONS = ["C1", "C2", "C3", "C4", "C5", "X"]
@@ -311,13 +311,19 @@ def run(args) -> None:
     lengths = {tid: sum(len(traces.text_of(m.get("content"))) for m in t if isinstance(m, dict)) for tid, t in trajs.items()}
     instance_of = dict(zip(rows.trajectory_id, rows.instance_id))
     conditions = args.conditions.split(",")
-    out_path = data / "tester_runs.jsonl"
+    out_path = data / f"tester_runs{suffix(args)}.jsonl"
     if args.restart and out_path.exists():
         out_path.unlink()
     done = {(r["trajectory_id"], r["condition"], r["seed"]) for r in map(json.loads, out_path.open())} \
         if out_path.exists() else set()
 
-    task_ids = list(dict.fromkeys(rows.instance_id))[: args.limit or None]
+    task_ids = list(dict.fromkeys(rows.instance_id))
+    if args.tasks:
+        wanted = args.tasks.split(",")
+        if missing := set(wanted) - set(task_ids):
+            raise SystemExit(f"not pilot tasks: {', '.join(sorted(missing))}")
+        task_ids = [t for t in task_ids if t in wanted]
+    task_ids = task_ids[: args.limit or None]
     shard, shards = map(int, args.shard.split("/"))
     task_ids = task_ids[shard - 1::shards]
     for instance_id in task_ids:
@@ -329,10 +335,11 @@ def run(args) -> None:
         task = group.iloc[0]
         tag = clean_tag(instance_id)
         print(f"[{instance_id}] preparing the cleaned image", flush=True)
-        if pull_image(task.docker_image).returncode != 0 or clean(task.docker_image, tag):
+        image = image_name(task.docker_image)
+        if pull_image(image).returncode != 0 or clean(image, tag):
             print(f"[{instance_id}] could not prepare the image, skipping", flush=True)
             continue
-        docker("rmi", "-f", task.docker_image, timeout=600)
+        docker("rmi", "-f", image, timeout=600)
         cmd = test_command(task.install_config)
         contexts = {}
         for trace, condition, seed in todo:
@@ -404,14 +411,19 @@ def run(args) -> None:
     summarize(args)
 
 
+def suffix(args) -> str:
+    """--out-tag gpt_oss_120b writes tester_runs_gpt_oss_120b.jsonl etc., keeping other models' runs apart."""
+    return f"_{args.out_tag}" if args.out_tag else ""
+
+
 def summarize(args) -> None:
     data = Path(args.data)
-    recs = [json.loads(l) for l in (data / "tester_runs.jsonl").open()]
+    recs = [json.loads(l) for l in (data / f"tester_runs{suffix(args)}.jsonl").open()]
     df = pd.DataFrame(recs)
     cols = ["instance_id", "trajectory_id", "period", "condition", "seed", "resolved", "model", "rounds", "tests",
             "pass_pg", "flags", "locked_in", "broken", "differential", "coverage", "patch_flagged",
             "prompt_tokens", "completion_tokens", "error"]
-    df[[c for c in cols if c in df]].to_csv(data / "tester_results.csv", index=False)
+    df[[c for c in cols if c in df]].to_csv(data / f"tester_results{suffix(args)}.csv", index=False)
 
     def stats(g: pd.DataFrame) -> dict:
         wrong, right = g[g.resolved == 0], g[g.resolved == 1]
@@ -428,7 +440,7 @@ def summarize(args) -> None:
     summary = {"model": sorted(df.model.unique().tolist()),
                "by_condition": {c: stats(g) for c, g in df.groupby("condition")},
                "by_condition_and_period": {f"{c} {p}": stats(g) for (c, p), g in df.groupby(["condition", "period"])}}
-    (data / "tester_summary.json").write_text(json.dumps(summary, indent=2))
+    (data / f"tester_summary{suffix(args)}.json").write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary["by_condition"], indent=2))
 
 
@@ -437,6 +449,8 @@ def main() -> None:
     ap.add_argument("step", choices=["run", "summarize"])
     ap.add_argument("--data", default="data")
     ap.add_argument("--limit", type=int, default=None, help="only the first N pilot tasks")
+    ap.add_argument("--tasks", default="", help="comma-separated instance ids: only these pilot tasks")
+    ap.add_argument("--out-tag", default="", help="name suffix for the output files, e.g. the model")
     ap.add_argument("--conditions", default=",".join(CONDITIONS))
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("--prompt-size", choices=list(LIMITS), default="full",
