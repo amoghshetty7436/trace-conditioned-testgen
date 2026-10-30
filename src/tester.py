@@ -337,8 +337,10 @@ def run(args) -> None:
         tag = clean_tag(instance_id)
         print(f"[{instance_id}] preparing the cleaned image", flush=True)
         image = image_name(task.docker_image)
-        if pull_image(image).returncode != 0 or clean(image, tag):
-            print(f"[{instance_id}] could not prepare the image, skipping", flush=True)
+        pull = pull_image(image)
+        error = ("pull failed: " + pull.stderr.strip()[-300:]) if pull.returncode != 0 else clean(image, tag)
+        if error:
+            print(f"[{instance_id}] could not prepare the image, skipping: {error}", flush=True)
             continue
         docker("rmi", "-f", image, timeout=600)
         cmd = test_command(task.install_config)
