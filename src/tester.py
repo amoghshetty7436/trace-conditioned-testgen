@@ -314,8 +314,9 @@ def run(args) -> None:
     out_path = data / f"tester_runs{suffix(args)}.jsonl"
     if args.restart and out_path.exists():
         out_path.unlink()
-    done = {(r["trajectory_id"], r["condition"], r["seed"]) for r in map(json.loads, out_path.open())} \
-        if out_path.exists() else set()
+    # --redo-empty reruns runs that ended without a test file; summarize keeps only the latest record of a run.
+    done = {(r["trajectory_id"], r["condition"], r["seed"]) for r in map(json.loads, out_path.open())
+            if r.get("test_code") or not args.redo_empty} if out_path.exists() else set()
 
     task_ids = list(dict.fromkeys(rows.instance_id))
     if args.tasks:
@@ -418,7 +419,12 @@ def suffix(args) -> str:
 
 def summarize(args) -> None:
     data = Path(args.data)
-    recs = [json.loads(l) for l in (data / f"tester_runs{suffix(args)}.jsonl").open()]
+    path = data / f"tester_runs{suffix(args)}.jsonl"
+    if not path.exists():
+        print(f"no runs in {path} yet")
+        return
+    latest = {(r["trajectory_id"], r["condition"], r["seed"]): r for r in map(json.loads, path.open())}
+    recs = list(latest.values())
     df = pd.DataFrame(recs)
     cols = ["instance_id", "trajectory_id", "period", "condition", "seed", "resolved", "model", "rounds", "tests",
             "pass_pg", "flags", "locked_in", "broken", "differential", "coverage", "patch_flagged",
@@ -457,6 +463,7 @@ def main() -> None:
                     help="small: keep each call under ~13k input tokens (for Gemma on the free Gemini API)")
     ap.add_argument("--shard", default="1/1", help="i/n: run every n-th task starting at the i-th, to run n processes at once")
     ap.add_argument("--keep-images", action="store_true")
+    ap.add_argument("--redo-empty", action="store_true", help="rerun runs that produced no test file")
     ap.add_argument("--restart", action="store_true", help="delete earlier runs and start over")
     args = ap.parse_args()
     run(args) if args.step == "run" else summarize(args)

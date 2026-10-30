@@ -6,7 +6,8 @@
 #   sbatch -C "gpu&hbm80g" perlmutter/gate.sbatch     # same, on an 80 GB A100 node if those are free sooner
 #
 # Rerunning after a timeout or crash resumes: finished runs are kept in data/tester_runs_gpt_oss_120b.jsonl.
-# Overrides: TASKS=a,b,c  CONDITIONS=C1,C5  SHARDS=4  EFFORT=medium  (e.g. `TASKS=... sbatch ...`)
+# Overrides: TASKS=a,b,c  CONDITIONS=C1,C5  SHARDS=4  EFFORT=high  MAX_TOKENS=16384  EXTRA=--redo-empty
+# (e.g. `TASKS=... sbatch ...`)
 #SBATCH -A m4999_g
 #SBATCH -C gpu
 #SBATCH -q regular
@@ -47,14 +48,14 @@ curl -sf http://127.0.0.1:8000/v1/models >/dev/null || { echo "vLLM not up after
 
 # 2. The harness talks to it like any OpenAI-compatible API.
 export TESTER_BASE_URL=http://127.0.0.1:8000/v1 TESTER_API_KEY=none TESTER_MODEL=openai/gpt-oss-120b
-export TESTER_REASONING_EFFORT="${EFFORT:-high}" TESTER_MAX_TOKENS=16384 CONTAINER_CLI=podman-hpc
+export TESTER_REASONING_EFFORT="${EFFORT:-medium}" TESTER_MAX_TOKENS="${MAX_TOKENS:-32768}" CONTAINER_CLI=podman-hpc
 PY="$ROOT/ttg-env/bin/python"
 "$PY" src/llm.py "Reply with the word ready." || { echo "model smoke test failed"; exit 1; }
 
 # 3. One tester process per task; each pulls and cleans its own image, then runs its 12 runs.
 pids=()
 for i in $(seq 1 "$SHARDS"); do
-  "$PY" src/tester.py run --out-tag "$TAG" --tasks "$TASKS" --conditions "$CONDITIONS" --shard "$i/$SHARDS" \
+  "$PY" src/tester.py run --out-tag "$TAG" --tasks "$TASKS" --conditions "$CONDITIONS" --shard "$i/$SHARDS" ${EXTRA:-} \
     > "$LOGS/shard-$i.log" 2>&1 &
   pids+=($!)
 done

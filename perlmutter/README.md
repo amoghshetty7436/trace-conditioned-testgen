@@ -21,7 +21,7 @@ If the job stops early (time limit, a crash), submit it again: finished runs are
 
 ## The gate pilot
 
-8 tasks x 2 patches (wrong and "correct") x 6 conditions = 96 runs, at high reasoning effort. The
+8 tasks x 2 patches (wrong and "correct") x 6 conditions = 96 runs, at medium reasoning effort (high effort used up the 16k-token budget thinking in most runs). The
 tasks are picked to tell a strong tester from a weak one: 7 bugs that the Azure model found and
 flash-lite missed (5 in wrong patches, 2 in patches the benchmark calls correct), plus 2 easy catches
 that both found, which check the setup. **Go** if gpt-oss-120b finds 3 or more of the 7 hard bugs;
