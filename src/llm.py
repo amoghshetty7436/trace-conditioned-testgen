@@ -5,6 +5,8 @@ Settings come from environment variables, so switching models needs no code chan
   TESTER_API_KEY   default: $GEMINI_API_KEY
   TESTER_MODEL     default: gemini-3.5-flash (free tier of the Gemini API)
   TESTER_TPM       optional input-token budget per minute; calls wait to stay under it
+  TESTER_MAX_TOKENS  optional cap on generated tokens per call, reasoning included (default 8192)
+  TESTER_REASONING_EFFORT  optional low/medium/high, for reasoning models such as gpt-oss
   Azure OpenAI works too: point TESTER_BASE_URL at https://<resource>.../openai/v1 and the key goes in
   an api-key header.
 
@@ -78,11 +80,13 @@ def pace(messages: list[dict]) -> None:
     _sent.append((time.time(), est))
 
 
-def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192, seed: int | None = None,
+def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int | None = None, seed: int | None = None,
          retries: int = 8) -> dict:
     """Returns {"text", "prompt_tokens", "completion_tokens"}. Waits out rate limits (429) and 5xx."""
     body = {"model": settings()["model"], "messages": messages, "temperature": temperature,
-            "max_tokens": max_tokens}
+            "max_tokens": max_tokens or int(os.environ.get("TESTER_MAX_TOKENS") or 8192)}
+    if os.environ.get("TESTER_REASONING_EFFORT"):
+        body["reasoning_effort"] = os.environ["TESTER_REASONING_EFFORT"]
     if seed is not None:
         body["seed"] = seed
     body["stream_options"] = {"include_usage": True}
@@ -97,7 +101,7 @@ def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192,
                     "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")}
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")[:500]
-            unknown = [k for k in ("seed", "stream_options", "temperature") if k in body and k in detail]
+            unknown = [k for k in ("seed", "stream_options", "temperature", "reasoning_effort") if k in body and k in detail]
             if e.code == 400 and unknown:  # not every endpoint takes these
                 for k in unknown:
                     del body[k]

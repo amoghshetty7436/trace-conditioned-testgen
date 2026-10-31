@@ -7,6 +7,9 @@ Docker runs need an x86 Linux machine with plenty of disk (task images are 1 to 
       -> data/pilot_tasks.jsonl (pilot rows: issue, patches, tests) and
          data/pilot_traces.jsonl.gz (the full traces, for the tester's trace conditions)
 
+  python src/pilot.py export-study  # anywhere with internet: every task in data/selected_traces.csv
+      -> data/study_tasks.jsonl and data/study_traces.jsonl.gz, fetched from Hugging Face
+
   python src/pilot.py validate    # on a machine with Docker
       -> data/pilot_validation.csv, data/pilot_validation.json
 
@@ -19,8 +22,10 @@ the tester's sandbox must strip). Images are deleted after each task unless --ke
 """
 
 import argparse
+import fcntl
 import gzip
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -134,16 +139,40 @@ def test_command(install_config) -> str:
     return cmd
 
 
+# The container command. Docker by default; on NERSC Perlmutter, CONTAINER_CLI=podman-hpc.
+CONTAINER_CLI = os.environ.get("CONTAINER_CLI", "docker")
+
+
 def docker(*args, timeout=None, check=False) -> subprocess.CompletedProcess:
-    return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout, check=check)
+    return subprocess.run([CONTAINER_CLI, *args], capture_output=True, text=True, timeout=timeout, check=check)
+
+
+def image_name(image: str) -> str:
+    """Podman won't guess a registry for short names like `swerebench/...`, so spell out docker.io."""
+    first = image.split("/")[0]
+    if CONTAINER_CLI == "docker" or ("/" in image and ("." in first or ":" in first or first == "localhost")):
+        return image
+    return "docker.io/" + image
 
 
 def pull_image(image: str) -> subprocess.CompletedProcess:
-    for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
-        pull = docker("pull", image, timeout=3600)
-        if pull.returncode == 0 or "429" not in pull.stderr:
-            break
-        time.sleep(300 * (attempt + 1))
+    """Pull one image at a time per machine: podman-hpc breaks when parallel pulls touch its state
+    (a JSON decode error from its Python wrapper), so tester shards take turns through a lock file."""
+    with open(Path(tempfile.gettempdir()) / f"ttg-pull-{os.getuid()}.lock", "w") as lock:
+        for attempt in range(8):
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                pull = docker("pull", image, timeout=3600)
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+            if pull.returncode == 0:
+                break
+            if re.search(r"429|toomanyrequests|rate limit", pull.stderr, re.I):  # Docker Hub rate limits clear after a while
+                time.sleep(300 * (attempt + 1))
+            elif "Traceback" in pull.stderr and attempt < 3:  # the podman-hpc wrapper crashed; try again
+                time.sleep(30)
+            else:
+                break
     return pull
 
 
@@ -205,6 +234,44 @@ def export(args) -> None:
     print(f"wrote the full traces to {traces}")
 
 
+def export_study(args) -> None:
+    """Like `export`, for all selected tasks, rebuilt from data/selected_traces.csv and the Hugging Face
+    datasets (downloads about 3 GB once), so selected_traces.parquet isn't needed."""
+    from datasets import load_dataset
+
+    from join import TRACES_REPO, load_tasks
+
+    data = Path(args.data)
+    sel = pd.read_csv(data / "selected_traces.csv")
+    ids = set(sel.trajectory_id)
+    traces = load_dataset(TRACES_REPO, split="train")
+    missing = {"trajectory_id", "model_patch", "trajectory"} - set(traces.column_names)
+    if missing:
+        raise SystemExit(f"{TRACES_REPO} has no column(s) {missing}; it has {traces.column_names}")
+    traces = traces.filter(lambda b: [t in ids for t in b], input_columns="trajectory_id", batched=True)
+    traces = traces.select_columns(["trajectory_id", "model_patch", "trajectory"]).to_pandas()
+    tasks = load_tasks()
+    task_cols = ["instance_id", "base_commit", "patch", "test_patch", "FAIL_TO_PASS", "PASS_TO_PASS",
+                 "install_config", "problem_statement"]
+    keep = ["instance_id", "trajectory_id", "period", "resolved", "exit_status", "docker_image", "created_at", "pilot"]
+    df = (sel[keep].merge(traces[["trajectory_id", "model_patch"]], on="trajectory_id")
+          .merge(tasks[task_cols], on="instance_id"))
+    if len(df) != len(sel):
+        lost = sorted(set(sel.trajectory_id) - set(df.trajectory_id))
+        raise SystemExit(f"{len(lost)} selected traces not found in the datasets, e.g. {lost[:3]}")
+    cols = [c for c in EXPORT_COLUMNS if c in df.columns] + ["pilot"]
+    out = data / "study_tasks.jsonl"
+    with out.open("w") as f:
+        for rec in df[cols].to_dict("records"):
+            f.write(json.dumps({k: plain(v) for k, v in rec.items()}, default=str) + "\n")
+    print(f"wrote {len(df)} traces from {df.instance_id.nunique()} tasks to {out}")
+    out = data / "study_traces.jsonl.gz"
+    with gzip.open(out, "wt") as f:
+        for tid, traj in zip(traces.trajectory_id, traces.trajectory):
+            f.write(json.dumps({"trajectory_id": tid, "trajectory": plain(traj)}, default=str) + "\n")
+    print(f"wrote the full traces to {out}")
+
+
 def plain(value):
     """numpy arrays and nested values from parquet -> plain lists and dicts for JSON."""
     if hasattr(value, "tolist") and not isinstance(value, (str, bytes)):
@@ -229,7 +296,7 @@ def validate(args) -> None:
         if instance_id in done:
             continue
         t = task.iloc[0]
-        image = t.docker_image
+        image = image_name(t.docker_image)
         f2p, p2p = as_list(t.FAIL_TO_PASS), as_list(t.PASS_TO_PASS)
         cmd = test_command(t.get("install_config"))
         print(f"[{instance_id}] pulling {image}", flush=True)
@@ -252,7 +319,8 @@ def validate(args) -> None:
         pd.DataFrame(records).to_csv(out_csv, index=False)
         if not args.keep_images:
             docker("rmi", "-f", image, timeout=600)
-            docker("system", "prune", "-f", timeout=600)
+            if CONTAINER_CLI == "docker":  # with parallel podman-hpc shards a prune can hit another shard's container
+                docker("system", "prune", "-f", timeout=600)
 
     res = pd.DataFrame(records)
     summary = summarize(res)
@@ -281,13 +349,13 @@ def summarize(res: pd.DataFrame) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["export", "validate"])
+    ap.add_argument("step", choices=["export", "export-study", "validate"])
     ap.add_argument("--data", default="data")
     ap.add_argument("--limit", type=int, default=None, help="validate only the first N tasks")
     ap.add_argument("--keep-images", action="store_true", help="don't delete images after each task")
     ap.add_argument("--restart", action="store_true", help="ignore earlier results and start over")
     args = ap.parse_args()
-    export(args) if args.step == "export" else validate(args)
+    {"export": export, "export-study": export_study, "validate": validate}[args.step](args)
 
 
 if __name__ == "__main__":

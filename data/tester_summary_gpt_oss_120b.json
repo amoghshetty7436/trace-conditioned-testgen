@@ -1,0 +1,207 @@
+{
+  "model": [
+    "openai/gpt-oss-120b"
+  ],
+  "by_condition": {
+    "C1": {
+      "runs": 16,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.0,
+      "mean_broken": 0.69,
+      "differential_rate": 0.688,
+      "mean_coverage": 0.348,
+      "mean_prompt_tokens": 22366
+    },
+    "C2": {
+      "runs": 16,
+      "bug_caught_rate": 0.125,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.44,
+      "mean_broken": 0.62,
+      "differential_rate": 0.875,
+      "mean_coverage": 0.361,
+      "mean_prompt_tokens": 34295
+    },
+    "C3": {
+      "runs": 16,
+      "bug_caught_rate": 0.125,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.69,
+      "mean_broken": 0.5,
+      "differential_rate": 0.625,
+      "mean_coverage": 0.347,
+      "mean_prompt_tokens": 31986
+    },
+    "C4": {
+      "runs": 16,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 5.06,
+      "mean_broken": 0.94,
+      "differential_rate": 0.5,
+      "mean_coverage": 0.302,
+      "mean_prompt_tokens": 45100
+    },
+    "C5": {
+      "runs": 16,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.75,
+      "mean_broken": 0.56,
+      "differential_rate": 0.688,
+      "mean_coverage": 0.327,
+      "mean_prompt_tokens": 63438
+    },
+    "X": {
+      "runs": 16,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 1,
+      "mean_tests": 4.27,
+      "mean_broken": 0.6,
+      "differential_rate": 0.75,
+      "mean_coverage": 0.34,
+      "mean_prompt_tokens": 56714
+    }
+  },
+  "by_condition_and_period": {
+    "C1 new": {
+      "runs": 10,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 3.0,
+      "mean_broken": 0.9,
+      "differential_rate": 0.6,
+      "mean_coverage": 0.237,
+      "mean_prompt_tokens": 29554
+    },
+    "C1 old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 5.67,
+      "mean_broken": 0.33,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.481,
+      "mean_prompt_tokens": 10388
+    },
+    "C2 new": {
+      "runs": 10,
+      "bug_caught_rate": 0.2,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.2,
+      "mean_broken": 0.9,
+      "differential_rate": 0.8,
+      "mean_coverage": 0.284,
+      "mean_prompt_tokens": 43914
+    },
+    "C2 old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.83,
+      "mean_broken": 0.17,
+      "differential_rate": 1.0,
+      "mean_coverage": 0.45,
+      "mean_prompt_tokens": 18263
+    },
+    "C3 new": {
+      "runs": 10,
+      "bug_caught_rate": 0.2,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.4,
+      "mean_broken": 0.5,
+      "differential_rate": 0.5,
+      "mean_coverage": 0.27,
+      "mean_prompt_tokens": 39220
+    },
+    "C3 old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 5.17,
+      "mean_broken": 0.5,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.453,
+      "mean_prompt_tokens": 19929
+    },
+    "C4 new": {
+      "runs": 10,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 5.3,
+      "mean_broken": 0.9,
+      "differential_rate": 0.4,
+      "mean_coverage": 0.197,
+      "mean_prompt_tokens": 56592
+    },
+    "C4 old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.67,
+      "mean_broken": 1.0,
+      "differential_rate": 0.667,
+      "mean_coverage": 0.386,
+      "mean_prompt_tokens": 25947
+    },
+    "C5 new": {
+      "runs": 10,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.2,
+      "mean_broken": 0.8,
+      "differential_rate": 0.6,
+      "mean_coverage": 0.281,
+      "mean_prompt_tokens": 73616
+    },
+    "C5 old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 5.67,
+      "mean_broken": 0.17,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.38,
+      "mean_prompt_tokens": 46475
+    },
+    "X new": {
+      "runs": 10,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 0,
+      "mean_tests": 4.4,
+      "mean_broken": 0.9,
+      "differential_rate": 0.7,
+      "mean_coverage": 0.276,
+      "mean_prompt_tokens": 66513
+    },
+    "X old": {
+      "runs": 6,
+      "bug_caught_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 1,
+      "mean_tests": 4.0,
+      "mean_broken": 0.0,
+      "differential_rate": 0.833,
+      "mean_coverage": 0.443,
+      "mean_prompt_tokens": 40383
+    }
+  }
+}
