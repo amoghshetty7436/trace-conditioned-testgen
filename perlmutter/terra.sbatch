@@ -8,7 +8,7 @@
 #
 # Needs ~/.ttg_azure.env (TESTER_BASE_URL, TESTER_API_KEY, TESTER_MODEL; see perlmutter/README.md).
 # Rerunning after a timeout or crash resumes: finished runs are kept in data/tester_runs_terra.jsonl.
-# Overrides: SEEDS=3  SHARDS=16  CONDITIONS=C1,C5  TASKS=a,b  EXTRA=--redo-empty
+# Overrides: SEEDS=3  FIRST_SEED=1  TAG=terra_s12  SHARDS=16  CONDITIONS=C1,C5  TASKS=a,b  EXTRA=--redo-empty
 #SBATCH -A m4999
 #SBATCH -C cpu
 #SBATCH -q regular
@@ -35,7 +35,8 @@ unset TESTER_REASONING_EFFORT
 SEEDS="${SEEDS:-1}"
 SHARDS="${SHARDS:-32}"
 CONDITIONS="${CONDITIONS:-C1,C2,C3,C4,C5,X}"
-TAG="terra"
+TAG="${TAG:-terra}"
+FIRST_SEED="${FIRST_SEED:-0}"
 LOGS="logs/$TAG-${SLURM_JOB_ID:-local}"
 mkdir -p "$LOGS"
 PY="$ROOT/ttg-env/bin/python"
@@ -43,7 +44,7 @@ PY="$ROOT/ttg-env/bin/python"
 
 pids=()
 for i in $(seq 1 "$SHARDS"); do
-  "$PY" src/tester.py run --set study --check --out-tag "$TAG" --seeds "$SEEDS" --conditions "$CONDITIONS" \
+  "$PY" src/tester.py run --set study --check --out-tag "$TAG" --seeds "$SEEDS" --first-seed "$FIRST_SEED" --conditions "$CONDITIONS" \
     ${TASKS:+--tasks "$TASKS"} --shard "$i/$SHARDS" ${EXTRA:-} > "$LOGS/shard-$i.log" 2>&1 &
   pids+=($!)
 done

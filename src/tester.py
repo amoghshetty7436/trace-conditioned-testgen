@@ -360,7 +360,7 @@ def run(args) -> None:
     task_ids = task_ids[shard - 1::shards]
     for instance_id in task_ids:
         group = rows[rows.instance_id == instance_id]
-        todo = [(tr, c, s) for tr in group.itertuples() for c in conditions for s in range(args.seeds)
+        todo = [(tr, c, s) for tr in group.itertuples() for c in conditions for s in range(args.first_seed, args.seeds)
                 if (tr.trajectory_id, c, s) not in done]
         if not todo:
             continue
@@ -504,6 +504,8 @@ def main() -> None:
     ap.add_argument("--out-tag", default="", help="name suffix for the output files, e.g. the model")
     ap.add_argument("--conditions", default=",".join(CONDITIONS))
     ap.add_argument("--seeds", type=int, default=1)
+    ap.add_argument("--first-seed", type=int, default=0,
+                    help="run seeds first_seed..seeds-1, e.g. --first-seed 1 --seeds 3 for seeds 1 and 2 only")
     ap.add_argument("--prompt-size", choices=list(LIMITS), default="full",
                     help="small: keep each call under ~13k input tokens (for Gemma on the free Gemini API)")
     ap.add_argument("--shard", default="1/1", help="i/n: run every n-th task starting at the i-th, to run n processes at once")
