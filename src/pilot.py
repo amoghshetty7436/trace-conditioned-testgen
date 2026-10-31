@@ -7,6 +7,9 @@ Docker runs need an x86 Linux machine with plenty of disk (task images are 1 to 
       -> data/pilot_tasks.jsonl (pilot rows: issue, patches, tests) and
          data/pilot_traces.jsonl.gz (the full traces, for the tester's trace conditions)
 
+  python src/pilot.py export-study  # anywhere with internet: every task in data/selected_traces.csv
+      -> data/study_tasks.jsonl and data/study_traces.jsonl.gz, fetched from Hugging Face
+
   python src/pilot.py validate    # on a machine with Docker
       -> data/pilot_validation.csv, data/pilot_validation.json
 
@@ -152,9 +155,9 @@ def image_name(image: str) -> str:
 
 
 def pull_image(image: str) -> subprocess.CompletedProcess:
-    for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
+    for attempt in range(8):  # Docker Hub rate limits (429, "toomanyrequests") clear after a while
         pull = docker("pull", image, timeout=3600)
-        if pull.returncode == 0 or "429" not in pull.stderr:
+        if pull.returncode == 0 or not re.search(r"429|toomanyrequests|rate limit", pull.stderr, re.I):
             break
         time.sleep(300 * (attempt + 1))
     return pull
@@ -216,6 +219,44 @@ def export(args) -> None:
         for tid, traj in zip(df.trajectory_id, df.trajectory):
             f.write(json.dumps({"trajectory_id": tid, "trajectory": plain(traj)}, default=str) + "\n")
     print(f"wrote the full traces to {traces}")
+
+
+def export_study(args) -> None:
+    """Like `export`, for all selected tasks, rebuilt from data/selected_traces.csv and the Hugging Face
+    datasets (downloads about 3 GB once), so selected_traces.parquet isn't needed."""
+    from datasets import load_dataset
+
+    from join import TRACES_REPO, load_tasks
+
+    data = Path(args.data)
+    sel = pd.read_csv(data / "selected_traces.csv")
+    ids = set(sel.trajectory_id)
+    traces = load_dataset(TRACES_REPO, split="train")
+    missing = {"trajectory_id", "model_patch", "trajectory"} - set(traces.column_names)
+    if missing:
+        raise SystemExit(f"{TRACES_REPO} has no column(s) {missing}; it has {traces.column_names}")
+    traces = traces.filter(lambda b: [t in ids for t in b], input_columns="trajectory_id", batched=True)
+    traces = traces.select_columns(["trajectory_id", "model_patch", "trajectory"]).to_pandas()
+    tasks = load_tasks()
+    task_cols = ["instance_id", "base_commit", "patch", "test_patch", "FAIL_TO_PASS", "PASS_TO_PASS",
+                 "install_config", "problem_statement"]
+    keep = ["instance_id", "trajectory_id", "period", "resolved", "exit_status", "docker_image", "created_at", "pilot"]
+    df = (sel[keep].merge(traces[["trajectory_id", "model_patch"]], on="trajectory_id")
+          .merge(tasks[task_cols], on="instance_id"))
+    if len(df) != len(sel):
+        lost = sorted(set(sel.trajectory_id) - set(df.trajectory_id))
+        raise SystemExit(f"{len(lost)} selected traces not found in the datasets, e.g. {lost[:3]}")
+    cols = [c for c in EXPORT_COLUMNS if c in df.columns] + ["pilot"]
+    out = data / "study_tasks.jsonl"
+    with out.open("w") as f:
+        for rec in df[cols].to_dict("records"):
+            f.write(json.dumps({k: plain(v) for k, v in rec.items()}, default=str) + "\n")
+    print(f"wrote {len(df)} traces from {df.instance_id.nunique()} tasks to {out}")
+    out = data / "study_traces.jsonl.gz"
+    with gzip.open(out, "wt") as f:
+        for tid, traj in zip(traces.trajectory_id, traces.trajectory):
+            f.write(json.dumps({"trajectory_id": tid, "trajectory": plain(traj)}, default=str) + "\n")
+    print(f"wrote the full traces to {out}")
 
 
 def plain(value):
@@ -294,13 +335,13 @@ def summarize(res: pd.DataFrame) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["export", "validate"])
+    ap.add_argument("step", choices=["export", "export-study", "validate"])
     ap.add_argument("--data", default="data")
     ap.add_argument("--limit", type=int, default=None, help="validate only the first N tasks")
     ap.add_argument("--keep-images", action="store_true", help="don't delete images after each task")
     ap.add_argument("--restart", action="store_true", help="ignore earlier results and start over")
     args = ap.parse_args()
-    export(args) if args.step == "export" else validate(args)
+    {"export": export, "export-study": export_study, "validate": validate}[args.step](args)
 
 
 if __name__ == "__main__":

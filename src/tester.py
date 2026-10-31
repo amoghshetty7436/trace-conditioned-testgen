@@ -17,7 +17,7 @@ Conditions (each adds to C2, as the plan says):
   C1 issue + agent patch + changed files        C2 C1 + related test files + README
   C3 C2 + trace summary   C4 C2 + structured trace   C5 C2 + raw trace   X C2 + raw trace of another task
 
-  python src/tester.py run [--limit N] [--conditions C1,C5] [--seeds 1] [--restart]
+  python src/tester.py run [--set study] [--check] [--limit N] [--conditions C1,C5] [--seeds 1] [--restart]
       -> data/tester_runs.jsonl (every run with its prompts' sizes, final test file, grades)
          data/tester_results.csv, data/tester_summary.json
   python src/tester.py summarize
@@ -29,6 +29,7 @@ and a model endpoint (see llm.py).
 import argparse
 import gzip
 import json
+import os
 import re
 import tempfile
 from pathlib import Path
@@ -37,8 +38,9 @@ import pandas as pd
 
 import llm
 import traces
-from pilot import PRELUDE_SH, RESULT_LINE, docker, image_name, new_files, pull_image, test_command, with_newline
-from sandbox import clean, clean_tag
+from pilot import (PRELUDE_SH, RESULT_LINE, as_list, docker, image_name, new_files, pull_image, run_tests,
+                   test_command, verdict, with_newline)
+from sandbox import added_lines, check, clean, clean_tag
 
 CONDITIONS = ["C1", "C2", "C3", "C4", "C5", "X"]
 ROUNDS = 3
@@ -273,8 +275,7 @@ def summary_for(trajectory_id: str, trajectory: list, cache_path: Path) -> str:
     if (trajectory_id, model) not in cache:
         reply = llm.chat([{"role": "user", "content": traces.SUMMARY_PROMPT.format(trace=traces.render_raw(trajectory, L["summary_input"]))}],
                          temperature=0.0)
-        with cache_path.open("a") as f:
-            f.write(json.dumps({"trajectory_id": trajectory_id, "model": model, "summary": reply["text"]}) + "\n")
+        append_line(cache_path, json.dumps({"trajectory_id": trajectory_id, "model": model, "summary": reply["text"]}))
         cache[(trajectory_id, model)] = reply["text"]
     return cache[(trajectory_id, model)]
 
@@ -297,12 +298,42 @@ def grade(image: str, task, trace, test_code: str, test_path: str, cmd: str) -> 
     }
 
 
+def append_line(path: Path, line: str) -> None:
+    """One write() per record, so parallel shards appending to the same file never interleave."""
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        os.write(fd, (line + "\n").encode())
+    finally:
+        os.close(fd)
+
+
+def check_task(task, group, tag: str, cmd: str, log_path: Path) -> tuple[bool, dict]:
+    """The sandbox checks of sandbox.py plus the agent labels of pilot.py validate, on the cleaned image.
+    Returns whether the task is usable (one commit, no leaked fix, hidden tests fail on the base code
+    and pass with the human fix) and, per trace, whether the agent patch passes the hidden tests."""
+    rec = {"instance_id": task.instance_id, **check(tag, added_lines(task.patch) + added_lines(task.test_patch))}
+    f2p, p2p = as_list(task.FAIL_TO_PASS), as_list(task.PASS_TO_PASS)
+    base = verdict(run_tests(tag, "", task.test_patch, cmd, f2p + p2p), f2p, p2p)
+    golden = verdict(run_tests(tag, task.patch, task.test_patch, cmd, f2p + p2p), f2p, p2p)
+    rec.update(base_f2p=base["f2p_passed"], golden_passes=golden["passes"],
+               works=bool(base["f2p_passed"] and base["f2p_passed"].startswith("0/") and golden["passes"]))
+    rec["ok"] = rec["git_ok"] and rec["no_leaks"] and rec["works"]
+    hidden = {}
+    if rec["ok"]:
+        for tr in group.itertuples():
+            hidden[tr.trajectory_id] = verdict(run_tests(tag, tr.model_patch, task.test_patch, cmd, f2p + p2p), f2p, p2p)["passes"]
+        rec["agent_labels_agree"] = all(hidden[tr.trajectory_id] == bool(tr.resolved) for tr in group.itertuples())
+        rec["hidden_tests_pass"] = hidden
+    append_line(log_path, json.dumps(rec, default=str))
+    return rec["ok"], hidden
+
+
 def run(args) -> None:
     data = Path(args.data)
-    rows = pd.read_json(data / "pilot_tasks.jsonl", lines=True, dtype=False)
-    traces_path = data / "pilot_traces.jsonl.gz"
+    rows = pd.read_json(data / f"{args.set}_tasks.jsonl", lines=True, dtype=False)
+    traces_path = data / f"{args.set}_traces.jsonl.gz"
     if not traces_path.exists():
-        raise SystemExit(f"{traces_path} is missing: run `python src/pilot.py export` where selected_traces.parquet is")
+        raise SystemExit(f"{traces_path} is missing: run `python src/pilot.py export` (pilot) or `export-study`")
     with gzip.open(traces_path, "rt") as f:
         trajs = {r["trajectory_id"]: r["trajectory"] for r in map(json.loads, f)}
     global L
@@ -322,7 +353,7 @@ def run(args) -> None:
     if args.tasks:
         wanted = args.tasks.split(",")
         if missing := set(wanted) - set(task_ids):
-            raise SystemExit(f"not pilot tasks: {', '.join(sorted(missing))}")
+            raise SystemExit(f"not {args.set} tasks: {', '.join(sorted(missing))}")
         task_ids = [t for t in task_ids if t in wanted]
     task_ids = task_ids[: args.limit or None]
     shard, shards = map(int, args.shard.split("/"))
@@ -344,6 +375,13 @@ def run(args) -> None:
             continue
         docker("rmi", "-f", image, timeout=600)
         cmd = test_command(task.install_config)
+        hidden = {}
+        if args.check:
+            ok, hidden = check_task(task, group, tag, cmd, data / f"task_checks{suffix(args)}.jsonl")
+            if not ok:
+                print(f"[{instance_id}] sandbox check failed (see task_checks), skipping", flush=True)
+                docker("rmi", "-f", tag, timeout=600)
+                continue
         contexts = {}
         for trace, condition, seed in todo:
             if trace.trajectory_id not in contexts:
@@ -365,7 +403,8 @@ def run(args) -> None:
             rec = {"instance_id": instance_id, "trajectory_id": trace.trajectory_id, "condition": condition,
                    "seed": seed, "resolved": int(trace.resolved), "period": task.period,
                    "model": llm.settings()["model"], "prompt_size": args.prompt_size, "prompt_chars": len(prompt), "rounds": 0,
-                   "prompt_tokens": 0, "completion_tokens": 0, "coverage": None, "feedback": []}
+                   "prompt_tokens": 0, "completion_tokens": 0, "coverage": None, "feedback": [],
+                   "hidden_tests_pass": hidden.get(trace.trajectory_id)}
             code = None
             try:
                 for rnd in range(ROUNDS):
@@ -406,8 +445,7 @@ def run(args) -> None:
             rec["patch_flagged"] = bool(rec.get("flags"))
             print(f"{label}: {rec.get('tests', 0)} tests, {rec.get('flags', 0)} flag the patch, "
                   f"{rec.get('broken', 0)} broken, coverage {rec['coverage']}", flush=True)
-            with out_path.open("a") as f:
-                f.write(json.dumps(rec) + "\n")
+            append_line(out_path, json.dumps(rec))
         if not args.keep_images:
             docker("rmi", "-f", tag, timeout=600)
             docker("system", "prune", "-f", timeout=600)
@@ -456,7 +494,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("step", choices=["run", "summarize"])
     ap.add_argument("--data", default="data")
-    ap.add_argument("--limit", type=int, default=None, help="only the first N pilot tasks")
+    ap.add_argument("--set", default="pilot", choices=["pilot", "study"],
+                    help="pilot: data/pilot_tasks.jsonl (20 tasks); study: data/study_tasks.jsonl (all selected tasks)")
+    ap.add_argument("--check", action="store_true",
+                    help="check each cleaned image first (no leaked fix, hidden tests behave) and skip tasks that fail")
+    ap.add_argument("--limit", type=int, default=None, help="only the first N tasks")
     ap.add_argument("--tasks", default="", help="comma-separated instance ids: only these pilot tasks")
     ap.add_argument("--out-tag", default="", help="name suffix for the output files, e.g. the model")
     ap.add_argument("--conditions", default=",".join(CONDITIONS))

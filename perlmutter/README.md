@@ -36,3 +36,33 @@ read the flagged tests if it finds 1 or 2; **stop** at 0.
   which shares the node's memory, so lower `SHARDS` if the node runs out.
 - The account name is refused: GPU jobs on Perlmutter charge `<project>_g`; check with `iris` or
   `sacctmgr show assoc user=$USER`.
+
+# The full study with Terra (CPU node, no GPU)
+
+The tester is Terra (`gpt-5.6-terra` on Azure OpenAI) at its default reasoning effort, as in the pilot.
+The model runs on Azure, so the job needs one CPU node for the task sandboxes and charges `m4999`
+(the CPU allocation). Phase 1 is seed 0: 169 tasks x 2 patches x 6 conditions = 2,028 runs, about
+2 to 3 node-hours and roughly $200 to $240 of Azure usage. Seeds 1 and 2 can follow later.
+
+1. On a login node, in the repo: `git pull`.
+2. Save the Azure settings outside the repo, readable only by you:
+   ```bash
+   cat > ~/.ttg_azure.env <<'ENV'
+   TESTER_BASE_URL=https://<resource>.services.ai.azure.com/openai/v1
+   TESTER_API_KEY=<key>
+   TESTER_MODEL=gpt-5.6-terra
+   ENV
+   chmod 600 ~/.ttg_azure.env
+   ```
+3. Log in to Docker Hub where the compute node can see it (169 images; anonymous pulls are
+   rate-limited): `podman-hpc login --authfile ~/.config/containers/auth.json docker.io`
+4. Fetch every selected task and trace from Hugging Face (about 3 GB download, free on the login node):
+   `HF_HOME=$SCRATCH/ttg/hf $SCRATCH/ttg/ttg-env/bin/python src/pilot.py export-study`.
+   It should print `wrote 338 traces from 169 tasks`.
+5. `sbatch perlmutter/terra.sbatch`. Later, `SEEDS=3 sbatch perlmutter/terra.sbatch` adds seeds 1 and 2.
+
+Each task is checked before any model call (`--check`): one commit in the cleaned image, no leaked
+fix, hidden tests fail on the base code and pass with the human fix. Tasks that fail are skipped and
+logged in `data/task_checks_terra.jsonl`, which also records whether each agent patch passes the hidden
+tests (each run carries it as `hidden_tests_pass`). Results: `data/tester_runs_terra.jsonl` and
+`data/tester_summary_terra.json`.
