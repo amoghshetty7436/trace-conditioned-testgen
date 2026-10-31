@@ -200,7 +200,8 @@ def prepare(args) -> None:
         pd.DataFrame(records).to_csv(out_csv, index=False)
         if not args.keep_images:
             docker("rmi", "-f", tag, timeout=600)
-            docker("system", "prune", "-f", timeout=600)
+            if CONTAINER_CLI == "docker":  # with parallel podman-hpc shards a prune can hit another shard's container
+                docker("system", "prune", "-f", timeout=600)
 
     res = pd.DataFrame(records)
     print(f"{int(res.get('ok', pd.Series(dtype=bool)).fillna(False).astype(bool).sum())}/{len(res)} tasks cleaned and checked OK")

@@ -22,6 +22,7 @@ the tester's sandbox must strip). Images are deleted after each task unless --ke
 """
 
 import argparse
+import fcntl
 import gzip
 import json
 import os
@@ -155,11 +156,23 @@ def image_name(image: str) -> str:
 
 
 def pull_image(image: str) -> subprocess.CompletedProcess:
-    for attempt in range(8):  # Docker Hub rate limits (429, "toomanyrequests") clear after a while
-        pull = docker("pull", image, timeout=3600)
-        if pull.returncode == 0 or not re.search(r"429|toomanyrequests|rate limit", pull.stderr, re.I):
-            break
-        time.sleep(300 * (attempt + 1))
+    """Pull one image at a time per machine: podman-hpc breaks when parallel pulls touch its state
+    (a JSON decode error from its Python wrapper), so tester shards take turns through a lock file."""
+    with open(Path(tempfile.gettempdir()) / f"ttg-pull-{os.getuid()}.lock", "w") as lock:
+        for attempt in range(8):
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                pull = docker("pull", image, timeout=3600)
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+            if pull.returncode == 0:
+                break
+            if re.search(r"429|toomanyrequests|rate limit", pull.stderr, re.I):  # Docker Hub rate limits clear after a while
+                time.sleep(300 * (attempt + 1))
+            elif "Traceback" in pull.stderr and attempt < 3:  # the podman-hpc wrapper crashed; try again
+                time.sleep(30)
+            else:
+                break
     return pull
 
 
@@ -306,7 +319,8 @@ def validate(args) -> None:
         pd.DataFrame(records).to_csv(out_csv, index=False)
         if not args.keep_images:
             docker("rmi", "-f", image, timeout=600)
-            docker("system", "prune", "-f", timeout=600)
+            if CONTAINER_CLI == "docker":  # with parallel podman-hpc shards a prune can hit another shard's container
+                docker("system", "prune", "-f", timeout=600)
 
     res = pd.DataFrame(records)
     summary = summarize(res)

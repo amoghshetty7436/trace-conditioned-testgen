@@ -38,7 +38,7 @@ import pandas as pd
 
 import llm
 import traces
-from pilot import (PRELUDE_SH, RESULT_LINE, as_list, docker, image_name, new_files, pull_image, run_tests,
+from pilot import (CONTAINER_CLI, PRELUDE_SH, RESULT_LINE, as_list, docker, image_name, new_files, pull_image, run_tests,
                    test_command, verdict, with_newline)
 from sandbox import added_lines, check, clean, clean_tag
 
@@ -448,7 +448,8 @@ def run(args) -> None:
             append_line(out_path, json.dumps(rec))
         if not args.keep_images:
             docker("rmi", "-f", tag, timeout=600)
-            docker("system", "prune", "-f", timeout=600)
+            if CONTAINER_CLI == "docker":  # with parallel podman-hpc shards a prune can hit another shard's container
+                docker("system", "prune", "-f", timeout=600)
     summarize(args)
 
 
