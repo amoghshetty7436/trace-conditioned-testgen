@@ -6,3 +6,5 @@ results/
 data/wheels/
 logs/
 ttg-gate-*.out
+data/study_tasks.jsonl
+data/study_traces.jsonl.gz
