@@ -1,0 +1,22 @@
+{
+  "commit": "44ec6b20afeb790a8c5c625497c89bf0f163967d",
+  "model": "Kimi-K3.1-Pro",
+  "reasoning_effort": "high",
+  "tasks": 21,
+  "max_cases": 252,
+  "timeout_hours": 2,
+  "original_job": "61373662",
+  "iris_snapshot": "Project      Charged(user)    Allocated(user)    Charged    Allocated\n---------  ---------------  -----------------  ---------  -----------\nm4999                  6.9               10.0       67.9       7000.0\nm4999_g                5.5               45.0     4166.3      14676.0\n",
+  "captured_at": 1794823217.8946147,
+  "conservative_remaining_hours": 2.8999999999999995,
+  "file_sha256": {
+    "preflight.py": "4faa66cecbd2c0293e9bea7e4fea0aa98b45aae6192b65d0a29e9e4d2b541932",
+    "retry.sbatch": "31d4e3a91ecdbc681ed559d045b741f11bddb8c2fff71c9cc5a11ca8d46bbb39",
+    "recording_proxy.py": "327882186474fffb61e691890d32a9f8c705c0e9fdcdb7e0744f9887fece0f19",
+    "paced_podman.py": "492996515e14f9927291e88698e1c6c5c02cb8b77fdd6c61273305f86d31700a",
+    "remaining-tasks.txt": "0535bc2d599a0dd7b59d47ecc20f6a15f3b40faa3b29a865d4f31074a00417f8",
+    "retry-plan.json": "39c53228da520cd49bf774c373a870b0f4980fc9c8454c50aa53ec909ccfa12c",
+    "study-data/study_tasks.jsonl": "4f76df8e0d5c18962f0f438a8001f60f713d5af61575eb625da4b33dff1071fc",
+    "study-data/study_traces.jsonl.gz": "0ff42aacf08dbac3770f2b10f4f2371152b166cc4fc369050c72d18d25ac4204"
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "model": [
+    "Kimi-K3.1-Pro"
+  ],
+  "by_condition": {
+    "C1": {
+      "runs": 40,
+      "bug_caught_rate": 0.4,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 1,
+      "mean_tests": 8.46,
+      "mean_broken": 0.36,
+      "differential_rate": 0.85,
+      "mean_coverage": 0.437,
+      "mean_prompt_tokens": 18568
+    },
+    "C2": {
+      "runs": 40,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 2,
+      "mean_tests": 7.89,
+      "mean_broken": 0.34,
+      "differential_rate": 0.85,
+      "mean_coverage": 0.425,
+      "mean_prompt_tokens": 28557
+    },
+    "C3": {
+      "runs": 40,
+      "bug_caught_rate": 0.45,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 3,
+      "mean_tests": 8.51,
+      "mean_broken": 0.62,
+      "differential_rate": 0.85,
+      "mean_coverage": 0.449,
+      "mean_prompt_tokens": 27446
+    },
+    "C4": {
+      "runs": 40,
+      "bug_caught_rate": 0.45,
+      "false_alarm_rate": 0.15,
+      "no_test_file": 2,
+      "mean_tests": 10.16,
+      "mean_broken": 1.26,
+      "differential_rate": 0.875,
+      "mean_coverage": 0.414,
+      "mean_prompt_tokens": 37381
+    },
+    "C5": {
+      "runs": 40,
+      "bug_caught_rate": 0.45,
+      "false_alarm_rate": 0.15,
+      "no_test_file": 0,
+      "mean_tests": 9.25,
+      "mean_broken": 0.62,
+      "differential_rate": 0.925,
+      "mean_coverage": 0.43,
+      "mean_prompt_tokens": 55788
+    },
+    "X": {
+      "runs": 40,
+      "bug_caught_rate": 0.45,
+      "false_alarm_rate": 0.15,
+      "no_test_file": 5,
+      "mean_tests": 9.43,
+      "mean_broken": 0.46,
+      "differential_rate": 0.775,
+      "mean_coverage": 0.401,
+      "mean_prompt_tokens": 57588
+    }
+  },
+  "by_condition_and_period": {
+    "C1 new": {
+      "runs": 20,
+      "bug_caught_rate": 0.3,
+      "false_alarm_rate": 0.0,
+      "no_test_file": 1,
+      "mean_tests": 7.21,
+      "mean_broken": 0.63,
+      "differential_rate": 0.75,
+      "mean_coverage": 0.41,
+      "mean_prompt_tokens": 21658
+    },
+    "C1 old": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.2,
+      "no_test_file": 0,
+      "mean_tests": 9.65,
+      "mean_broken": 0.1,
+      "differential_rate": 0.95,
+      "mean_coverage": 0.462,
+      "mean_prompt_tokens": 15479
+    },
+    "C2 new": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 1,
+      "mean_tests": 6.95,
+      "mean_broken": 0.58,
+      "differential_rate": 0.8,
+      "mean_coverage": 0.39,
+      "mean_prompt_tokens": 31353
+    },
+    "C2 old": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 1,
+      "mean_tests": 8.84,
+      "mean_broken": 0.11,
+      "differential_rate": 0.9,
+      "mean_coverage": 0.462,
+      "mean_prompt_tokens": 25761
+    },
+    "C3 new": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 2,
+      "mean_tests": 8.06,
+      "mean_broken": 1.11,
+      "differential_rate": 0.8,
+      "mean_coverage": 0.42,
+      "mean_prompt_tokens": 33326
+    },
+    "C3 old": {
+      "runs": 20,
+      "bug_caught_rate": 0.4,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 1,
+      "mean_tests": 8.95,
+      "mean_broken": 0.16,
+      "differential_rate": 0.9,
+      "mean_coverage": 0.477,
+      "mean_prompt_tokens": 21566
+    },
+    "C4 new": {
+      "runs": 20,
+      "bug_caught_rate": 0.4,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 1,
+      "mean_tests": 9.21,
+      "mean_broken": 2.16,
+      "differential_rate": 0.85,
+      "mean_coverage": 0.377,
+      "mean_prompt_tokens": 43554
+    },
+    "C4 old": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.2,
+      "no_test_file": 1,
+      "mean_tests": 11.11,
+      "mean_broken": 0.37,
+      "differential_rate": 0.9,
+      "mean_coverage": 0.45,
+      "mean_prompt_tokens": 31209
+    },
+    "C5 new": {
+      "runs": 20,
+      "bug_caught_rate": 0.5,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 0,
+      "mean_tests": 8.25,
+      "mean_broken": 0.95,
+      "differential_rate": 0.95,
+      "mean_coverage": 0.426,
+      "mean_prompt_tokens": 61910
+    },
+    "C5 old": {
+      "runs": 20,
+      "bug_caught_rate": 0.4,
+      "false_alarm_rate": 0.2,
+      "no_test_file": 0,
+      "mean_tests": 10.25,
+      "mean_broken": 0.3,
+      "differential_rate": 0.9,
+      "mean_coverage": 0.434,
+      "mean_prompt_tokens": 49667
+    },
+    "X new": {
+      "runs": 20,
+      "bug_caught_rate": 0.6,
+      "false_alarm_rate": 0.1,
+      "no_test_file": 4,
+      "mean_tests": 9.06,
+      "mean_broken": 0.88,
+      "differential_rate": 0.65,
+      "mean_coverage": 0.342,
+      "mean_prompt_tokens": 65680
+    },
+    "X old": {
+      "runs": 20,
+      "bug_caught_rate": 0.3,
+      "false_alarm_rate": 0.2,
+      "no_test_file": 1,
+      "mean_tests": 9.74,
+      "mean_broken": 0.11,
+      "differential_rate": 0.9,
+      "mean_coverage": 0.448,
+      "mean_prompt_tokens": 49497
+    }
+  }
+}

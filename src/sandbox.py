@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from pilot import as_list, docker, pull_image, run_tests, test_command, verdict
+from pilot import CONTAINER_CLI, as_list, docker, pull_image, run_tests, test_command, verdict
 
 MIN_NEEDLE = 30  # shorter added lines (`return x`, `)`) are too common to mean anything
 
@@ -141,8 +141,8 @@ def flatten(container_name: str, image: str, tag: str) -> subprocess.CompletedPr
     if cfg.get("Cmd"):
         changes.append(f"CMD {json.dumps(cfg['Cmd'])}")
     args = [a for c in changes for a in ("--change", c)]
-    export = subprocess.Popen(["docker", "export", container_name], stdout=subprocess.PIPE)
-    out = subprocess.run(["docker", "import", *args, "-", tag], stdin=export.stdout, capture_output=True, text=True)
+    export = subprocess.Popen([CONTAINER_CLI, "export", container_name], stdout=subprocess.PIPE)
+    out = subprocess.run([CONTAINER_CLI, "import", *args, "-", tag], stdin=export.stdout, capture_output=True, text=True)
     export.wait()
     return out
 

@@ -1,0 +1,29 @@
+{
+  "task_ids": [
+    "GenericMappingTools__pygmt-1530",
+    "OCHA-DAP__hdx-python-country-63",
+    "PyCQA__pyflakes-275",
+    "cta-observatory__pyirf-240",
+    "dag-hammarskjold-library__dlx-402",
+    "developmentseed__cogeo-mosaic-232",
+    "elastic__elastic-otel-python-197",
+    "feder-observatory__stellarphot-470",
+    "iterative__dvc-1992",
+    "iterative__dvc-4066",
+    "mozilla__bleach-302",
+    "mroberge__hydrofunctions-61",
+    "narwhals-dev__narwhals-1079",
+    "pypa__pip-13047",
+    "pysmt__pysmt-502",
+    "reframe-hpc__reframe-3328",
+    "repobee__repobee-csvgrades-23",
+    "sigmavirus24__github3.py-1167",
+    "simpeg__simpeg-1637",
+    "tobymao__sqlglot-4505",
+    "yt-dlp__yt-dlp-11751"
+  ],
+  "tasks": 21,
+  "planned_cases": 252,
+  "source_commit": "44ec6b20afeb790a8c5c625497c89bf0f163967d",
+  "policy": "Retry in isolated directory with unchanged validation and original full trajectory pool; retain original results. No previously completed task rerun."
+}

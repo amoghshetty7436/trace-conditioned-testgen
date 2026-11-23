@@ -1,0 +1,11 @@
+{
+  "tasks": 169,
+  "trajectories": 338,
+  "planned_cases": 2028,
+  "differences_from_cached_inputs": [],
+  "input_sha256": {
+    "study_traces.jsonl.gz": "0ff42aacf08dbac3770f2b10f4f2371152b166cc4fc369050c72d18d25ac4204",
+    "selected_traces.csv": "1441696e77b9a6e9464ce7e7e1d746df373c9d878165de6ac61a065d20f69134",
+    "study_tasks.jsonl": "4f76df8e0d5c18962f0f438a8001f60f713d5af61575eb625da4b33dff1071fc"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "pilot_tasks": 20,
+  "new_tasks": 149,
+  "new_planned_cases": 1788,
+  "matching_inputs": true,
+  "differences": [],
+  "reuse_policy": "Reuse pilot C1-C5; keep pilot X separate because its donor pool contains 40 rather than 338 trajectories. No pilot task is rerun."
+}

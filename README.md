@@ -52,3 +52,49 @@ TESTER_MODEL=gemma-4-26b-a4b-it TESTER_TPM=15000 python src/tester.py run --prom
 `--prompt-size small` cuts each prompt section to a fixed budget (the trace to 14k characters, about 4k tokens) and in revision rounds resends the issue, patch, changed files (plus related tests for C2 and up), current test file and failures, without the trace; `TESTER_TPM` paces calls to the per-minute limit. To use a local vLLM server instead: `TESTER_BASE_URL=http://localhost:8000/v1 TESTER_MODEL=openai/gpt-oss-20b`.
 
 Pilot results on the free model, by condition: [docs/pilot_flash_lite.md](docs/pilot_flash_lite.md).
+
+## Azure reasoning-model experiment
+
+The client also accepts `AZURE_OPENAI_BASE_URL`, `AZURE_OPENAI_API_VERSION`,
+`AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and
+`AZURE_OPENAI_REASONING_EFFORT`. Supply the key through the environment; do not
+commit it. Explicit `TESTER_BASE_URL` settings take precedence over Azure settings.
+Reasoning requests use `max_completion_tokens` (default 16,384, configurable with
+`TESTER_MAX_COMPLETION_TOKENS`) and omit temperature.
+
+To reproduce the 30-task newer sample, including the 10 newer pilot tasks:
+
+```bash
+python src/prepare_new.py --out results/azure-gpt56-high-new30 --tasks 30 --seed 0
+DOCKER_DEFAULT_PLATFORM=linux/amd64 python src/tester.py run \
+  --data results/azure-gpt56-high-new30 --seeds 1 --validate-images \
+  --workers 4 --docker-workers 2
+python scripts/compare_runs.py --data results/azure-gpt56-high-new30 \
+  --out docs/azure_new30.md
+```
+
+Set the Azure environment variables before running the tester. The data directory
+holds the selected task IDs, dataset revisions, a credential-free experiment
+configuration, image validation records, generated tests from every round, and
+results. Resume checks reject configuration changes in an existing experiment;
+use a new directory when changing models or prompts. Original pilot outputs stay
+in `data/`. The comparison report separates all newer-task results from the paired
+comparison on overlapping pilot tasks.
+
+`--workers` overlaps independent tester cases while processing one task image at a
+time; `--docker-workers` separately caps fresh test containers. Each model reply
+and generation round is checkpointed before proceeding, so a retry can resume
+without regenerating completed rounds. Context is read once per agent patch,
+trace summaries are shared safely, and concurrent rate-limit retries share a
+cooldown. A directory lock prevents two runners from writing the same experiment.
+Timing records and API token-cache counts are saved for measuring throughput.
+After reviewing a source-only change, `--allow-code-change` permits a resume and
+archives the previous configuration. It never permits a model, prompt setting,
+or dataset change in the same experiment directory.
+
+`--validate-images` checks the cleaned image for leaks and reproduces the hidden
+test baseline, human fix, and both agent labels before making generation calls.
+If `image_sizes.json` is present in the experiment directory, the runner uses its
+compressed image sizes to reserve estimated extraction space and records tasks
+blocked by disk capacity in `task_errors.jsonl`. It does not prune unrelated Docker
+resources. The 30-task run's status is in [docs/azure_new30.md](docs/azure_new30.md).

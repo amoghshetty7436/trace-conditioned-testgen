@@ -1,0 +1,46 @@
+{
+  "scope": "PILOT ONLY. Full study requires explicit approval after reviewing pilot results.",
+  "commit": "44ec6b20afeb790a8c5c625497c89bf0f163967d",
+  "source_unmodified": true,
+  "model": "DeepSeek-V4-Flash",
+  "endpoint": "https://ishaan-oai.services.ai.azure.com/openai/v1",
+  "reasoning_effort": "high",
+  "max_tokens": 65536,
+  "tasks": 20,
+  "trajectories": 40,
+  "seed": 0,
+  "conditions": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "X"
+  ],
+  "planned_cases": 240,
+  "shards": 8,
+  "cpu_nodes": 1,
+  "walltime_hours": 2,
+  "account": "m4999",
+  "full_study_authorized": false,
+  "inputs": {
+    "pilot_tasks.jsonl": "e2ef1ee1960552b48c6bb9f03574ae70659dd4195726ad0bc94fe99a80f2b2bb",
+    "pilot_traces.jsonl.gz": "840b2b729dc65a5df985fc796e9889bf3bc74c52c72587094b43dc5e916f4471"
+  },
+  "source_sha256": {
+    "src/pilot.py": "cb9f35210674199747d1e552250e84eae146f521509d3a97a123cf0a565cf3b9",
+    "src/sandbox.py": "d11a59d4266b4cf0e9fbc9a7fff4b5b5a10720384fdc103265370e92b17d2bbf",
+    "src/tester.py": "825a609d82b4eca0581a515d28942548a7a344ce2778195e42f70890356ce97e",
+    "src/llm.py": "f0d9175277de529b56765759399abb519bc5ec136399e7d50ec1cd14ce8cab3b",
+    "src/select_tasks.py": "819e12db8d969f107ac0c83de55de791329ef0b7becbbbca3cecb5cb8108ff32",
+    "src/traces.py": "6c297ce379e5bf478e0ecc6e58965f43f535f97d80dafc0218e24731b1a70b4e",
+    "src/join.py": "aa83640d69b1f90297da860ec9337dd894641442c52935ad48c00dbb01796edf"
+  },
+  "launcher_sha256": "5163e16fa146e0dece2c24bed043ed9ee5a7f757db90e8846cc9d1d505d860e3",
+  "baseline": "repo/data/tester_runs.jsonl",
+  "baseline_sha256": "c8f19bf838cfa8d7574639a603b8c7eb4924e058909b71907ab4f829f0beb625",
+  "job_id": "60629144",
+  "allocation_mode": "interactive",
+  "qos": "interactive",
+  "node": "nid200076"
+}

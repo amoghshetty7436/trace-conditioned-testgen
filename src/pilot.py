@@ -19,8 +19,10 @@ the tester's sandbox must strip). Images are deleted after each task unless --ke
 """
 
 import argparse
+import fcntl
 import gzip
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -37,6 +39,7 @@ EXPORT_COLUMNS = [
 DEFAULT_TEST_CMD = "pytest --no-header -rA --tb=no -p no:cacheprovider"
 RESULT_LINE = re.compile(r"^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+(\S+)", re.M)
 RUN_TIMEOUT = 1800
+CONTAINER_CLI = os.environ.get("CONTAINER_CLI", "docker")
 
 # Shared start of every in-container script: activate the env and work around image quirks.
 PRELUDE_SH = r"""
@@ -135,15 +138,29 @@ def test_command(install_config) -> str:
 
 
 def docker(*args, timeout=None, check=False) -> subprocess.CompletedProcess:
-    return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout, check=check)
+    return subprocess.run([CONTAINER_CLI, *args], capture_output=True, text=True, timeout=timeout, check=check)
+
+
+def image_name(image: str) -> str:
+    first = image.split("/")[0]
+    if CONTAINER_CLI == "docker" or ("/" in image and ("." in first or ":" in first or first == "localhost")):
+        return image
+    return "docker.io/" + image
 
 
 def pull_image(image: str) -> subprocess.CompletedProcess:
-    for attempt in range(4):  # Docker Hub rate limits (429) clear after a while
-        pull = docker("pull", image, timeout=3600)
-        if pull.returncode == 0 or "429" not in pull.stderr:
-            break
-        time.sleep(300 * (attempt + 1))
+    # podman-hpc's shared image state cannot safely handle simultaneous pulls.
+    with (Path(tempfile.gettempdir()) / f"ttg-pull-{os.getuid()}.lock").open("a") as lock:
+        for attempt in range(4):
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                pull = docker("pull", image_name(image), timeout=3600)
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+            if pull.returncode == 0 or not re.search(r"429|toomanyrequests|rate limit|Traceback", pull.stderr, re.I):
+                break
+            if attempt < 3:
+                time.sleep(300 * (attempt + 1))
     return pull
 
 

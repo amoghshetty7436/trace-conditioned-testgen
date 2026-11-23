@@ -1,0 +1,28 @@
+{
+  "commit": "44ec6b20afeb790a8c5c625497c89bf0f163967d",
+  "deployment": "Kimi-K3.1-Pro",
+  "reasoning_effort": "high",
+  "max_tokens": 65536,
+  "seed": 0,
+  "shards": 32,
+  "new_tasks": 149,
+  "excluded_pilot_tasks": 20,
+  "planned_new_cases": 1788,
+  "pilot_x_pool": "40 trajectories; report separately",
+  "study_x_pool": "338 trajectories",
+  "cpu_node_limit_hours": 6.5,
+  "pilot_dependency": "61370723",
+  "file_sha256": {
+    "recording_proxy.py": "327882186474fffb61e691890d32a9f8c705c0e9fdcdb7e0744f9887fece0f19",
+    "paced_podman.py": "492996515e14f9927291e88698e1c6c5c02cb8b77fdd6c61273305f86d31700a",
+    "preflight.py": "be290eef344e6601b9e8921a2300e400dac38657f131434a46418f192e446637",
+    "study.sbatch": "1ebaeaf1e3398e52b179bdcb25278696660dfb9196d86896d94bb2ca05038376",
+    "remaining-tasks.txt": "c8349ffca0190a14fdc18f460f317bfd3fa757b7852223d6f0fc1d1e0be94db4",
+    "excluded-pilot-tasks.json": "a1328ac36a84f2692dd795fb4d94f8f9898bd1f805d324598ccc89a0162ec0bf",
+    "study-data/study_tasks.jsonl": "4f76df8e0d5c18962f0f438a8001f60f713d5af61575eb625da4b33dff1071fc",
+    "study-data/study_traces.jsonl.gz": "0ff42aacf08dbac3770f2b10f4f2371152b166cc4fc369050c72d18d25ac4204",
+    "study-data/selected_traces.csv": "1441696e77b9a6e9464ce7e7e1d746df373c9d878165de6ac61a065d20f69134",
+    "budget-snapshot.json": "f873af0e0341b12d3cadcc3a2977cf543395b770c2d7594821d26703d69d8025"
+  },
+  "retry_reason": "Initial preflight failed: Iris inaccessible from compute node; snapshot captured on login node. No cases executed."
+}

@@ -1,0 +1,243 @@
+{
+  "integrity_checks": "passed",
+  "cases": 240,
+  "tasks": 20,
+  "validation_checks_passed": 20,
+  "deepseek": {
+    "flagged_without_explicit_failure": [
+      {
+        "instance_id": "radiocosmology__alpenhorn-226",
+        "trajectory_id": "chatcmpl-ff96d0be9c97da35e573a587dd50c855",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 0,
+        "flagged_tests": [
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_includes_suspect",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_option_exists",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_with_cancel",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_with_now",
+          "tests/cli/node/test_ttg_generated.py::test_clean_without_include_bad_excludes_suspect"
+        ],
+        "Pa": {
+          "tests/cli/node/test_ttg_generated.py::test_update_delete_includes_suspect_and_corrupt": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_update_delete_skips_wanted_suspect": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_update_skips_check_for_suspect_marked_for_deletion": "FAILED"
+        },
+        "Pg": {
+          "tests/cli/node/test_ttg_generated.py::test_update_delete_includes_suspect_and_corrupt": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_update_delete_skips_wanted_suspect": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_option_exists": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_includes_suspect": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_clean_without_include_bad_excludes_suspect": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_with_now": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_clean_include_bad_with_cancel": "PASSED",
+          "tests/cli/node/test_ttg_generated.py::test_update_skips_check_for_suspect_marked_for_deletion": "FAILED"
+        }
+      }
+    ],
+    "no_test_code": [
+      {
+        "instance_id": "dalito__ucumvert-25",
+        "trajectory_id": "chatcmpl-5b1f586a2bc22fff6d1d7b8f3890e170",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 0,
+        "completion_tokens": 65536
+      },
+      {
+        "instance_id": "roboflow__supervision-1739",
+        "trajectory_id": "chatcmpl-2cb4f679a201b9e8f1159c1585d852fb",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 0,
+        "completion_tokens": 65536
+      }
+    ],
+    "all_tests_broken": [
+      {
+        "instance_id": "radiocosmology__alpenhorn-226",
+        "trajectory_id": "chatcmpl-ff96d0be9c97da35e573a587dd50c855",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "C2",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "C4",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "X",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C2",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2060",
+        "trajectory_id": "chatcmpl-c64d40bd5795fcd1ff05b11f3ba826b4",
+        "condition": "X",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C4",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2060",
+        "trajectory_id": "chatcmpl-c4232e8a763a0f4faed3de2b733f9fef",
+        "condition": "C4",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "X",
+        "seed": 0,
+        "resolved": 1
+      }
+    ],
+    "explicit_error_count": 0
+  },
+  "terra": {
+    "flagged_without_explicit_failure": [],
+    "no_test_code": [],
+    "all_tests_broken": [
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-21a567d3947cb30f7e4808485d624e50",
+        "condition": "X",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C2",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C3",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "C4",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "canonical__charmcraft-2042",
+        "trajectory_id": "chatcmpl-a7ff1de2646436557439345431ab54d5",
+        "condition": "X",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "radiocosmology__alpenhorn-226",
+        "trajectory_id": "chatcmpl-ff96d0be9c97da35e573a587dd50c855",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "probabl-ai__skore-914",
+        "trajectory_id": "chatcmpl-dafbf62868afa3a16fb65c72ef00070b",
+        "condition": "C5",
+        "seed": 0,
+        "resolved": 0
+      },
+      {
+        "instance_id": "probabl-ai__skore-914",
+        "trajectory_id": "chatcmpl-bfa4598e0ea25ad45444d020bc6a9ed3",
+        "condition": "C1",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "probabl-ai__skore-914",
+        "trajectory_id": "chatcmpl-bfa4598e0ea25ad45444d020bc6a9ed3",
+        "condition": "C2",
+        "seed": 0,
+        "resolved": 1
+      },
+      {
+        "instance_id": "pypa__setuptools_scm-803",
+        "trajectory_id": "chatcmpl-f95f63c8a73a8c9e437ce2cd9147d919",
+        "condition": "C5",
+        "seed": 0,
+        "resolved": 0
+      }
+    ],
+    "explicit_error_count": 0
+  },
+  "scoring": "Diagnostics only; original patch_flagged scores preserved."
+}
