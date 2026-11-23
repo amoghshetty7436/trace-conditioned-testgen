@@ -1,0 +1,16 @@
+{
+  "source_repository": "https://github.com/amoghshetty7436/trace-conditioned-testgen",
+  "source_commit": "44ec6b20afeb790a8c5c625497c89bf0f163967d",
+  "source": "Exact bytes extracted from the git source archive, not reconstructed from the locally normalized reference.",
+  "model": "gpt-5.6-terra",
+  "seed": 0,
+  "cases": 1611,
+  "tasks_with_at_least_one_case": 135,
+  "complete_tasks": 134,
+  "reasoning_text_present": false,
+  "files": {
+    "task_checks_terra.jsonl": "b8d06461a357e0be3b2ad8468577f61eb0ee8332ec1979e4fb6ed66409b00b96",
+    "tester_runs_terra.jsonl": "ed61908959530c2c7f3d361a637d84cf167bee961de37b082859d6b60c8a8847",
+    "terra.sbatch": "9803652a59d5e5b341bf0e308a6a2cd6ec650dfa9483b1120e863a23448bf4f1"
+  }
+}
