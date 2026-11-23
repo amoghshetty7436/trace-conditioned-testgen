@@ -98,3 +98,4 @@ If `image_sizes.json` is present in the experiment directory, the runner uses it
 compressed image sizes to reserve estimated extraction space and records tasks
 blocked by disk capacity in `task_errors.jsonl`. It does not prune unrelated Docker
 resources. The 30-task run's status is in [docs/azure_new30.md](docs/azure_new30.md).
+Pilot results on the stronger model: [docs/pilot_azure.md](docs/pilot_azure.md).

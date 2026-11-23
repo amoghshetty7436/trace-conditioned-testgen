@@ -508,6 +508,8 @@ def _run(args) -> None:
         task_ids = [t for t in task_ids if t in wanted]
     sizes_path = data / "image_sizes.json"
     sizes = {r["instance_id"]: r.get("compressed_gb", 0) for r in json.loads(sizes_path.read_text())} if sizes_path.exists() else {}
+    shard, shards = map(int, args.shard.split("/"))
+    task_ids = task_ids[shard - 1::shards]
     for instance_id in task_ids:
         group = rows[rows.instance_id == instance_id]
         todo = [(tr, c, s) for tr in group.itertuples() for c in conditions for s in range(args.seeds)
@@ -666,6 +668,7 @@ def main() -> None:
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("--prompt-size", choices=list(LIMITS), default="full",
                     help="small: keep each call under ~13k input tokens (for Gemma on the free Gemini API)")
+    ap.add_argument("--shard", default="1/1", help="i/n: run every n-th task starting at the i-th, to run n processes at once")
     ap.add_argument("--keep-images", action="store_true")
     ap.add_argument("--workers", type=int, default=1, help="concurrent tester cases within one task image")
     ap.add_argument("--docker-workers", type=int, default=1, help="maximum simultaneous test/context containers")

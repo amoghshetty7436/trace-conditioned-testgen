@@ -5,6 +5,8 @@ Settings come from environment variables, so switching models needs no code chan
   TESTER_API_KEY   default: $GEMINI_API_KEY
   TESTER_MODEL     default: gemini-3.5-flash (free tier of the Gemini API)
   TESTER_TPM       optional input-token budget per minute; calls wait to stay under it
+  Azure OpenAI works too: point TESTER_BASE_URL at https://<resource>.../openai/v1 and the key goes in
+  an api-key header.
 
   python src/llm.py models     # list the models the endpoint offers
 """
@@ -51,6 +53,11 @@ def make_request(path: str, body: dict | None = None) -> urllib.request.Request:
     auth = {"api-key": s["api_key"]} if s["azure"] else {"Authorization": f"Bearer {s['api_key']}"}
     return urllib.request.Request(url, data=json.dumps(body).encode() if body is not None else None,
                                   headers={"Content-Type": "application/json", **auth})
+
+
+def headers(s: dict) -> dict:
+    auth = {"api-key": s["api_key"]} if ".azure.com" in s["base_url"] else {"Authorization": f"Bearer {s['api_key']}"}
+    return {"Content-Type": "application/json", **auth}
 
 
 def request(path: str, body: dict | None = None, timeout: int = 600) -> dict:
@@ -147,10 +154,13 @@ def chat(messages: list[dict], temperature: float = 0.2, max_tokens: int = 8192,
                     "elapsed_seconds": round(time.monotonic() - started, 3), "retries": attempt}
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")[:500]
-            unknown = [k for k in ("seed", "stream_options") if k in body and k in detail]
+            unknown = [k for k in ("seed", "stream_options", "temperature") if k in body and k in detail]
             if e.code == 400 and unknown:  # not every endpoint takes these
                 for k in unknown:
                     del body[k]
+                continue
+            if e.code == 400 and "max_tokens" in body and "max_completion_tokens" in detail:  # newer OpenAI models
+                body["max_completion_tokens"] = max(body.pop("max_tokens"), 32768)  # includes reasoning tokens
                 continue
             if (e.code == 429 or e.code >= 500) and attempt < retries:
                 hint = re.search(r"retry in ([\d.]+)s", detail)
