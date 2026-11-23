@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress Update</title>
+<style>
+  @page { size: Letter; margin: 0.55in 0.62in 0.5in 0.62in; }
+  :root { --ink:#141414; --muted:#666; --blue:#2456c8; --rule:#dedbd4; --blueBg:#e8eefb; }
+  html, body { background:#fff; color:var(--ink); margin:0; }
+  body { font-family: "DejaVu Serif", serif; font-size: 9.4pt; line-height: 1.4; }
+  .kicker { font-family: Inter; font-weight:600; font-size: 7pt; letter-spacing: .2em; color: var(--blue); text-transform: uppercase; }
+  h1 { font-family: Inter; font-weight:700; font-size: 19pt; margin: 2px 0 1px; letter-spacing:-.015em; }
+  .byline { font-family: Inter; font-size: 8pt; color: #555; margin-bottom: 8px; }
+  h2 { font-family: Inter; font-weight:700; font-size: 11pt; margin: 11px 0 5px; display:flex; align-items:center; gap:7px; }
+  h2 .n { color: var(--blue); font-size: 8pt; font-weight:600; letter-spacing:.05em; }
+  h2::after { content:""; flex:1; border-top: 1px solid var(--rule); margin-left: 6px; }
+  p { margin: 0 0 6px; text-align: justify; }
+  em { font-style: italic; }
+  .sans { font-family: Inter; }
+  .row { display:flex; gap:18px; align-items:flex-start; margin: 4px 0 6px; }
+  .figtitle { font-family: Inter; font-weight:600; font-size: 8pt; margin-bottom: 3px; }
+  .cap { font-family: Inter; font-size: 7pt; color: var(--muted); line-height:1.35; margin-top:3px; }
+  .legend { font-family: Inter; font-size: 7.3pt; color:#333; margin: 0 0 3px; }
+  .sw { display:inline-block; width:9px; height:7px; margin: 0 3px 0 8px; vertical-align: 0; }
+  table { border-collapse: collapse; font-family: Inter; font-size: 7.7pt; width:100%; }
+  th { font-weight: 500; font-size: 6.6pt; letter-spacing: .08em; text-transform: uppercase; color:#555; text-align:left; padding: 3px 5px; border-bottom: 1.2px solid #222; vertical-align: bottom; }
+  td { padding: 4px 5px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td.k { font-weight: 600; white-space: nowrap; }
+  .num th, .num td { text-align:center; }
+  .num th:first-child, .num td:first-child { text-align:left; }
+  td.best { background: var(--blueBg); font-weight:700; color: var(--blue); }
+  tr.hl td { background: var(--blueBg); font-weight:600; }
+  .pill { display:inline-block; font-size: 6.3pt; font-weight:600; letter-spacing:.08em; padding: 1px 7px; border-radius: 8px; white-space:nowrap; }
+  .done { background:#e3f1e7; color:#25703f; } .prog { background:var(--blueBg); color:var(--blue); } .risk { background:#fbeedd; color:#a4600c; }
+  .box { background:#fbf1e3; border-left: 3px solid #a4600c; padding: 6px 10px; margin: 7px 0 0; font-size: 9.2pt; }
+  .box b { font-family: Inter; font-size: 8pt; }
+  .small { font-size: 8.6pt; color:#333; }
+  .avoid { break-inside: avoid; }
+</style>
+</head>
+<body>
+<div class="kicker">CS 6158 · Progress update</div>
+<h1>Trace-Conditioned Test Generation</h1>
+<div class="byline">Amogh Shetty (avs97) and Ishaan Shah (ics35) · November 23, 2026 · Update to the October 19 midterm report, which follows</div>
+
+<h2><span class="n">01</span>How far along we are</h2>
+<p>At the midterm we had a working pipeline and two pilots on 20 tasks. Since then we have run the full study. Of the 169 tasks we selected, 148 now run end to end, each with one patch the benchmark marks as unresolved (a wrong patch) and one it marks as resolved (a correct patch). We ran all six conditions on these tasks with two tester models: gpt-5.6-terra through Azure OpenAI (147 tasks) and Kimi-K3.1-Pro, an open-weight model we also reach through Azure (148 tasks). That is roughly 3,500 graded runs for one seed, against 480 at the midterm. We also tried four other testers on small pilots, and we answered a question raised on the midterm about which part of the trace led to the test that caught the bug.</p>
+<p>To make the setup clear: the tester is not a tool-using agent. It gets a fixed prompt with the issue, the agent's patch, the changed files and the condition's extra context, writes one pytest file, and sees the failures and patch coverage for up to three rounds. The traces come from Qwen3-Coder-480B running in OpenHands (the published SWE-rebench trajectories). A test <em>flags</em> a patch when it fails on the agent's patch and passes on the human fix. A flag on a wrong patch is a <em>catch</em>, and a flag on a correct patch is a <em>false alarm</em>.</p>
+
+<h2><span class="n">02</span>Results so far</h2>
+<div class="row avoid">
+  <div style="flex:0 0 330px">
+    <div class="figtitle">Wrong patches caught (%), by condition</div>
+    <div class="legend"><span class="sw" style="background:#2456c8;margin-left:0"></span>Kimi-K3.1-Pro<span class="sw" style="background:#a8a397"></span>gpt-5.6-terra</div>
+    <svg width="330" height="172" viewBox="0 0 330 172" xmlns="http://www.w3.org/2000/svg" font-family="Inter" font-size="8.6">
+<line x1="108.0" y1="4" x2="108.0" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="108.0" y="161" text-anchor="middle" fill="#666" font-size="7.6">0</text>
+<line x1="146.8" y1="4" x2="146.8" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="146.8" y="161" text-anchor="middle" fill="#666" font-size="7.6">10</text>
+<line x1="185.6" y1="4" x2="185.6" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="185.6" y="161" text-anchor="middle" fill="#666" font-size="7.6">20</text>
+<line x1="224.4" y1="4" x2="224.4" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="224.4" y="161" text-anchor="middle" fill="#666" font-size="7.6">30</text>
+<line x1="263.2" y1="4" x2="263.2" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="263.2" y="161" text-anchor="middle" fill="#666" font-size="7.6">40</text>
+<line x1="302.0" y1="4" x2="302.0" y2="150" stroke="#e4e2dc" stroke-width="0.8"/>
+<text x="302.0" y="161" text-anchor="middle" fill="#666" font-size="7.6">50</text>
+<text x="100" y="19" text-anchor="end" fill="#111"><tspan font-weight="700">C1</tspan> Code only</text>
+<rect x="108" y="8.0" width="140.5" height="9" fill="#2456c8"/>
+<text x="251.5" y="15.7" fill="#111" font-weight="600" font-size="7.8">36.2</text>
+<rect x="108" y="18.5" width="104.0" height="9" fill="#a8a397"/>
+<text x="215.0" y="26.2" fill="#111" font-weight="600" font-size="7.8">26.8</text>
+<text x="100" y="43" text-anchor="end" fill="#111"><tspan font-weight="700">C2</tspan> Repo context</text>
+<rect x="108" y="32.0" width="146.7" height="9" fill="#2456c8"/>
+<text x="257.7" y="39.7" fill="#111" font-weight="600" font-size="7.8">37.8</text>
+<rect x="108" y="42.5" width="122.2" height="9" fill="#a8a397"/>
+<text x="233.2" y="50.2" fill="#111" font-weight="600" font-size="7.8">31.5</text>
+<text x="100" y="67" text-anchor="end" fill="#111"><tspan font-weight="700">C3</tspan> Trace summary</text>
+<rect x="108" y="56.0" width="180.4" height="9" fill="#2456c8"/>
+<text x="291.4" y="63.7" fill="#111" font-weight="600" font-size="7.8">46.5</text>
+<rect x="108" y="66.5" width="125.3" height="9" fill="#a8a397"/>
+<text x="236.3" y="74.2" fill="#111" font-weight="600" font-size="7.8">32.3</text>
+<text x="100" y="91" text-anchor="end" fill="#111"><tspan font-weight="700">C4</tspan> Structured</text>
+<rect x="108" y="80.0" width="177.3" height="9" fill="#2456c8"/>
+<text x="288.3" y="87.7" fill="#111" font-weight="600" font-size="7.8">45.7</text>
+<rect x="108" y="90.5" width="116.0" height="9" fill="#a8a397"/>
+<text x="227.0" y="98.2" fill="#111" font-weight="600" font-size="7.8">29.9</text>
+<text x="100" y="115" text-anchor="end" fill="#111"><tspan font-weight="700">C5</tspan> Raw trace</text>
+<rect x="108" y="104.0" width="180.4" height="9" fill="#2456c8"/>
+<text x="291.4" y="111.7" fill="#111" font-weight="600" font-size="7.8">46.5</text>
+<rect x="108" y="114.5" width="143.6" height="9" fill="#a8a397"/>
+<text x="254.6" y="122.2" fill="#111" font-weight="600" font-size="7.8">37.0</text>
+<text x="100" y="139" text-anchor="end" fill="#111"><tspan font-weight="700">X</tspan> Mismatched</text>
+<rect x="108" y="128.0" width="166.5" height="9" fill="#2456c8"/>
+<text x="277.5" y="135.7" fill="#111" font-weight="600" font-size="7.8">42.9</text>
+<rect x="108" y="138.5" width="101.7" height="9" fill="#a8a397"/>
+<text x="212.7" y="146.2" fill="#111" font-weight="600" font-size="7.8">26.2</text>
+</svg>
+    <div class="cap">Seed 0, 128 tasks both testers completed (127 wrong patches each).</div>
+  </div>
+  <div style="flex:1">
+    <div class="figtitle">False alarms on correct patches (%)</div>
+    <table class="num">
+      <tr><th>Condition</th><th>Kimi</th><th>Terra</th></tr>
+      <tr><td><b>C1</b> Code only</td><td>10.3</td><td>7.9</td></tr>
+      <tr><td><b>C2</b> Repo context</td><td>11.1</td><td>7.1</td></tr>
+      <tr><td><b>C3</b> Trace summary</td><td class="best">9.5</td><td>8.7</td></tr>
+      <tr><td><b>C4</b> Structured</td><td>13.5</td><td>5.6</td></tr>
+      <tr><td><b>C5</b> Raw trace</td><td>10.3</td><td class="best">2.4</td></tr>
+      <tr><td><b>X</b> Mismatched</td><td>10.9</td><td>5.6</td></tr>
+      <tr><td><b>All</b></td><td>11.0</td><td>6.2</td></tr>
+    </table>
+    <div class="cap">Same 128 tasks (127 correct patches per condition). Lower is better; the lowest for each tester is highlighted.</div>
+  </div>
+</div>
+<p>Kimi catches more wrong patches than Terra in every condition (42.7% against 30.6% overall), but it also raises more false alarms (11.0% against 6.2%). Both testers catch more with a trace than without one. On all 148 tasks, Kimi flags 69 wrong patches with the trace summary (C3) and 69 with the raw trace (C5), against 58 for C2. Paired by task, C3 catches 20 patches that C2 misses and misses 9 that C2 catches (exact paired test, p = 0.061); for C5 the counts are 22 and 11 (p = 0.080). The direction matches the pilot, but with one seed it is not yet significant.</p>
+<p>The mismatched control X is where the two testers differ, and we think this is the main result of this update. For Terra, the matching raw trace beats a trace from another task by about 11 points (37.0% against 26.2%) and also gives its fewest false alarms. On all 147 of Terra's tasks the picture is the same (C5 at 36.3%, X at 25.3%). For Kimi, the wrong trace helps almost as much as the right one (42.9% against 46.5%). This surprised us. X uses the closest-length trace from another task, which for 9 tasks came from the same project, but leaving those out barely changes it, and 49 of Kimi's 56 X catches are bugs that C1 or C2 also catch. Kimi seems to do better with any long agent log in front of it, so whether the trace content matters may depend on the tester.</p>
+<p>Gemini 3.5 Flash-Lite caught 13.2% of wrong patches on 19 tasks, and DeepSeek-V4-Flash caught 21.7% on 20 tasks with almost no false alarms (0.8%). gpt-oss-120b, served with vLLM on a Perlmutter A100 node, caught none of 7 hard bugs that Terra caught in a gate test, so we stopped it. A gpt-5.6-sol run has finished only 2 of 30 tasks.</p>
+
+<h2 style="break-before: page"><span class="n">03</span>What in the trace helped</h2>
+<p>On the midterm we were asked what in the trace actually helped the tester. We answered this for Kimi using every strict trace-only catch: a wrong patch flagged in C3, C4 or C5 but not in C1, C2 or X. There are 13 such tasks covering 18 runs. For each flagged test we looked for the part of the exact prompt Kimi received that the test relies on. In 16 of the 18 runs the test links to a specific span of the trace, and none came from a dead end or a reverted edit.</p>
+<table class="avoid" style="margin:2px 0 4px">
+  <tr><th style="width:24%">Source in the trace</th><th style="width:7%">Runs</th><th>Example</th></tr>
+  <tr><td class="k">The agent's own checks</td><td>6</td><td>hydra-zen-299: the agent's quick test printed a <i>MissingMandatoryValue</i> error for a field with a default factory, and the agent moved on. Kimi's tests targeted exactly that field.</td></tr>
+  <tr><td class="k">Unchecked assumptions</td><td>4</td><td>markdownify-171: the summary notes the agent chose an empty separator after first considering a bare "&gt;". All 8 tests expecting the bare marker fail on the patch.</td></tr>
+  <tr><td class="k">Doubts; unhandled edge cases</td><td>3; 3</td><td>Doubts all come from the Doubts section of the summary (C3). Edge cases the agent named but never covered show up in all three trace views.</td></tr>
+  <tr><td class="k">No link found</td><td>2</td><td>The test does not match anything Kimi was shown.</td></tr>
+</table>
+<p>We tagged the runs with the help of an LLM and checked 20 of the 29 tagged runs by hand, including every one marked low or medium confidence. All 20 held up. The links rest on matching content, since Kimi's own reasoning quotes the span directly in only 15 of 39 linked tests. Terra's catches are not tagged yet.</p>
+
+<h2><span class="n">04</span>Challenges</h2>
+<table class="avoid">
+  <tr><th style="width:19%">Challenge</th><th>What happened, and what we did</th></tr>
+  <tr><td class="k">Unusable tasks</td><td>15 of the 169 tasks fail sandbox validation and for 6 the agent's patch does not apply. A retry recovered none, so we report on 148 tasks and leave these out of the denominators.</td></tr>
+  <tr><td class="k">Benchmark labels</td><td>Some patches marked correct still have bugs (we found two by hand at the midterm), so some false alarms may be real catches. We will review a sample by hand.</td></tr>
+</table>
+
+<h2><span class="n">05</span>Are we on track?</h2>
+<p>For the main goal, yes. The dataset, the pipeline and a full one-seed evaluation with the control are done. The table below gives the status of each deliverable from the midterm plan.</p>
+<table class="avoid">
+  <tr><th style="width:20%">Deliverable</th><th style="width:13%">Status</th><th>Details</th></tr>
+  <tr><td class="k">Dataset and pipeline</td><td><span class="pill done">DONE</span></td><td>148 of 169 tasks usable, and every part runs at scale on Perlmutter with Azure inference.</td></tr>
+  <tr><td class="k">Evaluation</td><td><span class="pill prog">IN PROGRESS</span></td><td>Seed 0 done for both testers. Next: seeds 1 and 2, with paired confidence intervals.</td></tr>
+  <tr><td class="k">Open models as testers</td><td><span class="pill done">DONE</span></td><td>Kimi on the full study; three more as pilots; gpt-5.6-sol still running.</td></tr>
+  <tr><td class="k">Trace attribution</td><td><span class="pill done">DONE</span></td><td>Done and hand-checked for Kimi.</td></tr>
+  <tr><td class="k">Mutation testing</td><td><span class="pill prog">IN PROGRESS</span></td><td>Under way on the generated test files.</td></tr>
+  <tr><td class="k">Paper and presentation</td><td><span class="pill prog">IN PROGRESS</span></td><td>Results and analysis written up as we go.</td></tr>
+</table>
+</body></html>
