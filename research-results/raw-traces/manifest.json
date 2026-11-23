@@ -1,0 +1,115 @@
+{
+  "description": "Raw API attempt directories with request JSON, original streamed responses and recorder metadata. Archives are grouped in lexicographic order.",
+  "archives": {
+    "kimi-pilot-api-01.tar.gz": {
+      "attempts": 200,
+      "sha256": "ab9c807831601af8df22b3a56abee8dca8ce505f748992ef86795f7c57eded23",
+      "bytes": 6551063
+    },
+    "kimi-pilot-api-02.tar.gz": {
+      "attempts": 200,
+      "sha256": "579623f20169a11776b833974593c663efcea5c46bc72c4fcd579ab30a0a95ac",
+      "bytes": 6630692
+    },
+    "kimi-pilot-api-03.tar.gz": {
+      "attempts": 124,
+      "sha256": "bdb8fb10c89129c7b83b5b21919da3418fdc52101b12e05cf19a0a3a2bec5aa8",
+      "bytes": 4323725
+    },
+    "kimi-study-api-01.tar.gz": {
+      "attempts": 200,
+      "sha256": "7291dcd0b578df2e0afd553f04afb40a68c6527fec3d19d3d30bbb0fb8428c4e",
+      "bytes": 6283129
+    },
+    "kimi-study-api-02.tar.gz": {
+      "attempts": 200,
+      "sha256": "c050aea7e575c3103939c4c59e6d59b5c6a85c940c0dc5428bf1432e07a9e260",
+      "bytes": 6496952
+    },
+    "kimi-study-api-03.tar.gz": {
+      "attempts": 200,
+      "sha256": "8a18285f0371dfd4ade1b1f4d47bd3937df35a20095bfc757d1b173d9c07e85e",
+      "bytes": 6482955
+    },
+    "kimi-study-api-04.tar.gz": {
+      "attempts": 200,
+      "sha256": "385851010439303209f50e66c77c58ac17eb3b8899885fd7e6904b673de445a0",
+      "bytes": 6610880
+    },
+    "kimi-study-api-05.tar.gz": {
+      "attempts": 200,
+      "sha256": "4ae893d5cf225095403e9fe1121ce8a5a96f0a85f08a00081071607cdd921156",
+      "bytes": 6950279
+    },
+    "kimi-study-api-06.tar.gz": {
+      "attempts": 200,
+      "sha256": "31473b87ee25876ad75f791fd6c1498005f937167e4c57c61d0ee0c5bdf1fdea",
+      "bytes": 7090856
+    },
+    "kimi-study-api-07.tar.gz": {
+      "attempts": 200,
+      "sha256": "6a1f979473b764fc9cfa34c8040893a7348bc0bd9a4e500dd3ff9459ff74d44f",
+      "bytes": 7046031
+    },
+    "kimi-study-api-08.tar.gz": {
+      "attempts": 200,
+      "sha256": "15d9362beb36657d30b6526dad1c20de3783c09ab7df3b9f92a7be29bacae244",
+      "bytes": 7018100
+    },
+    "kimi-study-api-09.tar.gz": {
+      "attempts": 200,
+      "sha256": "c9677e649f19b675e82814a877381cd77e42ee092cc108de1e8ed0a31ad76392",
+      "bytes": 7300258
+    },
+    "kimi-study-api-10.tar.gz": {
+      "attempts": 200,
+      "sha256": "13aaa39b7f47e72d9d306dc8a7c1a9e85ee4868b277b9fa403b9e6e0b8da3548",
+      "bytes": 7176776
+    },
+    "kimi-study-api-11.tar.gz": {
+      "attempts": 200,
+      "sha256": "55d5915d0cc88fe2c12cee5732aeb3b6ba4f9225528bc0d6aa8b81eac2a080dc",
+      "bytes": 6880820
+    },
+    "kimi-study-api-12.tar.gz": {
+      "attempts": 200,
+      "sha256": "5676443562b66083bb6fa78e1533248b605cfd6b07afd690169ab32e377304b7",
+      "bytes": 6945368
+    },
+    "kimi-study-api-13.tar.gz": {
+      "attempts": 200,
+      "sha256": "23a65484f702ae589626efb5c753ee599730f1d18dc631daeb49cdd24271a546",
+      "bytes": 7409095
+    },
+    "kimi-study-api-14.tar.gz": {
+      "attempts": 200,
+      "sha256": "a506044c406e4018f6e3f6a59d3bf0b0c92f66c787034eb045646eb8707e1fd7",
+      "bytes": 6766186
+    },
+    "kimi-study-api-15.tar.gz": {
+      "attempts": 200,
+      "sha256": "688d91b411ff0c17bb6b63eac4baa4b55b6c3c29477ca53496ddc09facef2379",
+      "bytes": 6468077
+    },
+    "kimi-study-api-16.tar.gz": {
+      "attempts": 200,
+      "sha256": "56918aa4700d738f58c07c29a518769e413f3ae643f386063d30014818fe3925",
+      "bytes": 7024261
+    },
+    "kimi-study-api-17.tar.gz": {
+      "attempts": 170,
+      "sha256": "4968ce61179b890a300609a3f9803bdea7dc30a3d11d3528129ec21cb953f5ef",
+      "bytes": 6111282
+    }
+  },
+  "inputs": {
+    "study_traces.jsonl.gz": {
+      "sha256": "0ff42aacf08dbac3770f2b10f4f2371152b166cc4fc369050c72d18d25ac4204",
+      "bytes": 14186938
+    },
+    "pilot_traces.jsonl.gz": {
+      "sha256": "840b2b729dc65a5df985fc796e9889bf3bc74c52c72587094b43dc5e916f4471",
+      "bytes": 1642743
+    }
+  }
+}
